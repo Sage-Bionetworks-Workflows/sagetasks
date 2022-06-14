@@ -44,12 +44,13 @@ upload_samplesheet = SynapseStoreDataFrameTask(name='Upload sample sheet to Syna
 
 with Flow('Demo') as flow:
     manifest_id = Parameter('manifest_id')
+    samplesheet_parent = Parameter('samplesheet_parent')
     auth_token = EnvVarSecret("SYNAPSE_AUTH_TOKEN")
     manifest = get_manifest(auth_token, manifest_id, ",")
     print_columns(manifest)
-    upload_samplesheet(auth_token, manifest, "samplesheet.csv", "syn31937712")
+    upload_samplesheet(auth_token, manifest, "samplesheet.csv", samplesheet_parent)
 
-params = {"manifest_id": "syn31937724"}
+params = {"manifest_id": "syn31937724", "samplesheet_parent": "syn31937712"}
 flow.run(parameters=params)
 
 # Or register the flow after launching Prefect Server with:
