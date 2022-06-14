@@ -1,11 +1,18 @@
 """Collection of Synapse-related Prefect tasks
 """
 
-from tempfile import NamedTemporaryFile
+import os
+from tempfile import TemporaryDirectory
 
 from prefect import Task
 import synapseclient
 import pandas as pd
+
+
+CONTENT_TYPES = {
+    ",": "text/csv",
+    "\t": "text/tab-separated-values"
+}
 
 
 class SynapseBaseTask(Task):
@@ -39,8 +46,13 @@ class SynapseStoreDataFrameTask(SynapseBaseTask):
 
     def run(self, auth_token, data_frame, name, parent_id, sep=","):
         self.auth_token = auth_token
-        with NamedTemporaryFile() as f:
-            data_frame.to_csv(f, sep=sep)
-            syn_file = synapseclient.File(f.name, name=name, parent=parent_id)
+        with TemporaryDirectory() as dirname:
+            fpath = os.path.join(dirname, name)
+            content_type = CONTENT_TYPES.get(sep, None)
+            with open(fpath, "w") as f:
+                data_frame.to_csv(f, sep=sep, index=False)
+            syn_file = synapseclient.File(fpath, name=name, parent=parent_id,
+                                          contentType=content_type)
             syn_file = self.synapse.store(syn_file)
+            os.remove(fpath)
         return syn_file

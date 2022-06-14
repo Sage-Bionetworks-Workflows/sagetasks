@@ -48,9 +48,11 @@ with Flow('Demo') as flow:
     auth_token = EnvVarSecret("SYNAPSE_AUTH_TOKEN")
     manifest = get_manifest(auth_token, manifest_id, ",")
     print_columns(manifest)
-    upload_samplesheet(auth_token, manifest, "samplesheet.csv", samplesheet_parent)
+    samplesheet = prepare_samplesheet(manifest)
+    upload_samplesheet(auth_token, samplesheet, "samplesheet.csv", samplesheet_parent)
 
 params = {"manifest_id": "syn31937724", "samplesheet_parent": "syn31937712"}
+flow.visualize(filename="flow")
 flow.run(parameters=params)
 
 # Or register the flow after launching Prefect Server with:

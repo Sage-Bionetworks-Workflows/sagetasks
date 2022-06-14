@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 synapseclient = "*"
-prefect = "*"
+prefect = {extras = ["viz"], version = "*"}
 sevenbridges-python = "*"
 pandas = "*"
 
