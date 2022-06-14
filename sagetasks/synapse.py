@@ -32,12 +32,16 @@ class SynapseGetDataFrameTask(SynapseBaseTask):
         self.auth_token = auth_token
         file = self.synapse.get(synapse_id, downloadFile=False)
         file_handle_id = file._file_handle.id
-        file_handle_url = self.synapse.restGET(
-            f"/fileHandle/{file_handle_id}/url",
+        file_temp_url = self.synapse.restGET(
+            f"/file/{file_handle_id}",
             self.synapse.fileHandleEndpoint,
-            params={"redirect": False}
+            params={
+                "fileAssociateId": synapse_id,
+                "fileAssociateType": "FileEntity",
+                "redirect": False
+            }
         )
-        data_frame = pd.read_table(file_handle_url, sep=sep)
+        data_frame = pd.read_table(file_temp_url, sep=sep)
         return data_frame
 
 class SynapseStoreDataFrameTask(SynapseBaseTask):
