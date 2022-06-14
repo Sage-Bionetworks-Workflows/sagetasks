@@ -26,9 +26,11 @@ class SynapseGetDataFrameTask(SynapseBaseTask):
         file = self.synapse.get(synapse_id, downloadFile=False)
         file_handle_id = file._file_handle.id
         file_handle_url = self.synapse.restGET(
-            f"/fileHandle/{file_handle_id}/url",
+            f"/file/{file_handle_id}",
             self.synapse.fileHandleEndpoint,
-            params={"redirect": False}
+            params={"redirect": False,
+                    "fileAssociateType": "FileEntity",
+                    "fileAssociateId": file.id.replace("syn", "")}
         )
         data_frame = pd.read_table(file_handle_url, sep=sep)
         return data_frame
