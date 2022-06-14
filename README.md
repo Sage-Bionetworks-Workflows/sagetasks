@@ -1,5 +1,5 @@
-# Sage Data Flows
+# Sage Prefect Tasks
 
-Sage data flows orchestrated using Prefect.
+Python package of useful Prefect tasks for common use cases at Sage Bionetworks.
 
 Inspired by [Pocket/data-flows](https://github.com/Pocket/data-flows).
