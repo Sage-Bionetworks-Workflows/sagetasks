@@ -17,24 +17,23 @@ CONTENT_TYPES = {
 
 class SynapseBaseTask(Task):
 
-    @property
-    def synapse(self):
-        return synapseclient.login(authToken=self.auth_token, silent=True)
+    def login(self, auth_token):
+        return synapseclient.login(authToken=auth_token, silent=True)
 
     def run(self, auth_token):
-        self.auth_token = auth_token
+        synapse = self.login(auth_token)
         raise NotImplementedError("The `run` method hasn't implemented.")
 
 
 class SynapseGetDataFrameTask(SynapseBaseTask):
 
     def run(self, auth_token, synapse_id, sep=None):
-        self.auth_token = auth_token
-        file = self.synapse.get(synapse_id, downloadFile=False)
+        synapse = self.login(auth_token)
+        file = synapse.get(synapse_id, downloadFile=False)
         file_handle_id = file._file_handle.id
-        file_temp_url = self.synapse.restGET(
+        file_temp_url = synapse.restGET(
             f"/file/{file_handle_id}",
-            self.synapse.fileHandleEndpoint,
+            synapse.fileHandleEndpoint,
             params={
                 "fileAssociateId": synapse_id,
                 "fileAssociateType": "FileEntity",
@@ -47,7 +46,7 @@ class SynapseGetDataFrameTask(SynapseBaseTask):
 class SynapseStoreDataFrameTask(SynapseBaseTask):
 
     def run(self, auth_token, data_frame, name, parent_id, sep=","):
-        self.auth_token = auth_token
+        synapse = self.login(auth_token)
         with TemporaryDirectory() as dirname:
             fpath = os.path.join(dirname, name)
             content_type = CONTENT_TYPES.get(sep, None)
@@ -55,6 +54,6 @@ class SynapseStoreDataFrameTask(SynapseBaseTask):
                 data_frame.to_csv(f, sep=sep, index=False)
             syn_file = synapseclient.File(fpath, name=name, parent=parent_id,
                                           contentType=content_type)
-            syn_file = self.synapse.store(syn_file)
+            syn_file = synapse.store(syn_file)
             os.remove(fpath)
         return syn_file
