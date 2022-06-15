@@ -4,7 +4,6 @@ Adapted from code that Tom Yu authored:
 https://github.com/include-dcc/synapse-cavatica/blob/main/scripts/rnaseq_flow.py
 """
 
-from multiprocessing.sharedctypes import Value
 import sevenbridges as sbg
 
 from prefect import Task
