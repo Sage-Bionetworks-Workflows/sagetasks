@@ -2,6 +2,8 @@
 
 Python package of useful Prefect tasks for common use cases at Sage Bionetworks.
 
+Some thoughts are included below the Demo Flow and Usage.
+
 Inspired by [Pocket/data-flows](https://github.com/Pocket/data-flows).
 
 ## Demo Flow
@@ -49,3 +51,7 @@ pipenv run python demo.py register
 # Stop the running containers
 prefect server stop
 ```
+
+## Thoughts
+
+- The `CavaticaBaseTask` demonstrates a use case for classes (_i.e._ extending `Task`) as opposed to functions (_i.e._ decorated by `@task`). On the other hand, `SynapseBaseTask` doesn't really benefit from the class structure.
