@@ -17,23 +17,25 @@ CONTENT_TYPES = {
 
 class SynapseBaseTask(Task):
 
-    def login(self, auth_token):
-        return synapseclient.login(authToken=auth_token, silent=True)
+    def run(self):
+        raise NotImplementedError("The `run` method hasn't implemented.")
+
+
+class SynapseClientTask(SynapseBaseTask):
 
     def run(self, auth_token):
-        synapse = self.login(auth_token)
-        raise NotImplementedError("The `run` method hasn't implemented.")
+        client = synapseclient.login(authToken=auth_token, silent=True)
+        return client
 
 
 class SynapseGetDataFrameTask(SynapseBaseTask):
 
-    def run(self, auth_token, synapse_id, sep=None):
-        synapse = self.login(auth_token)
-        file = synapse.get(synapse_id, downloadFile=False)
+    def run(self, client, synapse_id, sep=None):
+        file = client.get(synapse_id, downloadFile=False)
         file_handle_id = file._file_handle.id
-        file_temp_url = synapse.restGET(
+        file_temp_url = client.restGET(
             f"/file/{file_handle_id}",
-            synapse.fileHandleEndpoint,
+            client.fileHandleEndpoint,
             params={
                 "fileAssociateId": synapse_id,
                 "fileAssociateType": "FileEntity",
@@ -45,8 +47,7 @@ class SynapseGetDataFrameTask(SynapseBaseTask):
 
 class SynapseStoreDataFrameTask(SynapseBaseTask):
 
-    def run(self, auth_token, data_frame, name, parent_id, sep=","):
-        synapse = self.login(auth_token)
+    def run(self, client, data_frame, name, parent_id, sep=","):
         with TemporaryDirectory() as dirname:
             fpath = os.path.join(dirname, name)
             content_type = CONTENT_TYPES.get(sep, None)
@@ -54,6 +55,6 @@ class SynapseStoreDataFrameTask(SynapseBaseTask):
                 data_frame.to_csv(f, sep=sep, index=False)
             syn_file = synapseclient.File(fpath, name=name, parent=parent_id,
                                           contentType=content_type)
-            syn_file = synapse.store(syn_file)
+            syn_file = client.store(syn_file)
             os.remove(fpath)
         return syn_file
