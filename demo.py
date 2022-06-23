@@ -34,6 +34,21 @@ def print_columns(data_frame):
 
 
 @task
+def head_df(data_frame, n):
+    return data_frame.head(n)
+
+
+@task
+def split_rows(data_frame):
+    return [row for _, row in data_frame.iterrows()]
+
+
+@task
+def print_values(series):
+    print(series.tolist())
+
+
+@task
 def prepare_samplesheet(manifest):
     samplesheet = (
         manifest.pivot(
@@ -90,9 +105,12 @@ with Flow("Demo") as flow:
 
     # Transform
     samplesheet = prepare_samplesheet(manifest)
+    head = head_df(manifest, 3)
+    head_rows = split_rows(head)
 
     # Load
     print_columns(manifest)
+    print_values.map(head_rows)
     upload_samplesheet(syn, samplesheet, "samplesheet.csv", samplesheet_parent)
 
 params = {
