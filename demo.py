@@ -14,13 +14,10 @@ from sagetasks.synapse import (
     SynapseStoreDataFrameTask,
 )
 from sagetasks.cavatica import (
-    CavaticaClientTask,
-    CavaticaGetProjectTask,
-    CavaticaGetAppTask,
+    SbgClientTask,
+    SbgGetProjectTask,
+    SbgGetAppTask,
 )
-
-# Constants
-SB_API_ENDPOINT = "https://cavatica-api.sbgenomics.com/v2"
 
 
 # --------------------------------------------------------------
@@ -73,9 +70,9 @@ get_manifest = SynapseGetDataFrameTask(name="Download manifest file from Synapse
 upload_samplesheet = SynapseStoreDataFrameTask(name="Upload sample sheet to Synapse")
 
 # Cavatica tasks
-cavatica_login = CavaticaClientTask(name="Create authenticated Cavatica client")
-get_project = CavaticaGetProjectTask(name="Retrieve Cavatica project")
-get_app = CavaticaGetAppTask(name="Retrieve Cavatica app")
+cavatica_login = SbgClientTask(name="Create authenticated Cavatica client")
+get_project = SbgGetProjectTask(name="Retrieve Cavatica project")
+get_app = SbgGetAppTask(name="Retrieve Cavatica app")
 
 # --------------------------------------------------------------
 # Open a Flow context and use the functional API (if possible)
@@ -96,7 +93,7 @@ with Flow("Demo") as flow:
 
     # Clients
     syn = synapse_login(syn_token)
-    sbg = cavatica_login(SB_API_ENDPOINT, sbg_token)
+    sbg = cavatica_login(sbg_token)
 
     # Extract
     manifest = get_manifest(syn, manifest_id, sep=",")
@@ -116,7 +113,7 @@ with Flow("Demo") as flow:
 params = {
     "manifest_id": "syn31937724",
     "samplesheet_parent": "syn31937712",
-    "project_name": "sandbox",
+    "project_name": "include-sandbox",
     "billing_group_id": "6428bd01-8c8a-4d57-b18d-be5632f701ed",
     "app_id": "cavatica/apps-publisher/kfdrc-rnaseq-workflow",
 }

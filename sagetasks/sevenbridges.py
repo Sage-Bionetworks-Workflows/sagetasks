@@ -1,4 +1,4 @@
-"""Collection of Cavatica-related Prefect tasks
+"""Collection of Seven Bridges Genomics-related Prefect tasks
 
 Adapted from code that Tom Yu authored:
 https://github.com/include-dcc/synapse-cavatica/blob/main/scripts/rnaseq_flow.py
@@ -8,7 +8,14 @@ from prefect import Task
 import sevenbridges as sbg
 
 
-class CavaticaBaseTask(Task):
+ENDPOINTS = {
+    "cavatica": "https://cavatica-api.sbgenomics.com/v2",
+    "cgc": "https://cavatica-api.sbgenomics.com/v2",
+    "sevenbridges": "https://api.sbgenomics.com/v2",
+}
+
+
+class SbgBaseTask(Task):
     def get_or_create(self, get_fn, create_fn):
         collection = get_fn()
         if len(collection) == 0:
@@ -26,27 +33,39 @@ class CavaticaBaseTask(Task):
         raise NotImplementedError("The `run` method hasn't implemented.")
 
 
-class CavaticaClientTask(CavaticaBaseTask):
-    def run(self, endpoint, auth_token):
+class SbgClientTask(SbgBaseTask):
+    def run(self, auth_token, platform="cavatica", endpoint=None):
+        assert platform is None or platform in ENDPOINTS
+        assert platform or endpoint
+        endpoint = endpoint if endpoint else ENDPOINTS[platform]
         return sbg.Api(url=endpoint, token=auth_token)
 
 
-class CavaticaGetProjectTask(CavaticaBaseTask):
-    def run(self, client, project_name, billing_group_id):
+class SbgGetProjectTask(SbgBaseTask):
+    @staticmethod
+    def get_fn(client, project_name):
+        def get():
+            return client.projects.query(name=project_name)
 
-        get = lambda: client.projects.query(name=project_name)
+        return get
 
+    @staticmethod
+    def create_fn(client, project_name, billing_group_id):
         def create():
             bg = client.billing_groups.get(id=billing_group_id)
             client.projects.create(name=project_name, billing_group=bg)
 
-        return self.get_or_create(get, create)
+        return create
+
+    def run(self, client, project_name, billing_group_id):
+        get_fn = self.get_fn(client, project_name)
+        create_fn = self.create_fn(client, project_name, billing_group_id)
+        return self.get_or_create(get_fn, create_fn)
 
 
-class CavaticaGetAppTask(CavaticaBaseTask):
-    def run(self, client, app_id, project):
-        app_name = app_id.split("/")[-1]
-
+class SbgGetAppTask(SbgBaseTask):
+    @staticmethod
+    def get_fn(client, project, app_name):
         def get():
             project_apps = client.apps.query(project=project.id, q=app_name)
             project_apps = sorted(project_apps, key=lambda x: len(x.id))
@@ -54,6 +73,10 @@ class CavaticaGetAppTask(CavaticaBaseTask):
                 project_apps = project_apps[:1]
             return project_apps
 
+        return get
+
+    @staticmethod
+    def create_fn(client, project, app_id, app_name):
         def create():
             # Retrieve public application
             public_apps = client.apps.query(visibility="public", id=app_id)
@@ -62,4 +85,10 @@ class CavaticaGetAppTask(CavaticaBaseTask):
             # Copy public application
             public_app.copy(project=project.id, name=app_name)
 
-        return self.get_or_create(get, create)
+        return create
+
+    def run(self, client, app_id, project):
+        app_name = app_id.split("/")[-1]
+        get_fn = self.get_fn(client, project, app_name)
+        create_fn = self.create_fn(client, project, app_id, app_name)
+        return self.get_or_create(get_fn, create_fn)
