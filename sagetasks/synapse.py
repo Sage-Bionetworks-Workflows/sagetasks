@@ -13,18 +13,23 @@ CONTENT_TYPES = {",": "text/csv", "\t": "text/tab-separated-values"}
 
 
 class SynapseBaseTask(Task):
+    def get_client(self, client_args):
+        return synapseclient.login(**client_args)
+
     def run(self):
-        raise NotImplementedError("The `run` method hasn't implemented.")
+        raise NotImplementedError("The `run` method isn't implemented.")
 
 
-class SynapseClientTask(SynapseBaseTask):
-    def run(self, auth_token):
-        client = synapseclient.login(authToken=auth_token, silent=True)
-        return client
+class SynapseClientArgsTask(SynapseBaseTask):
+    def run(self, auth_token, **kwargs):
+        client_args = dict(authToken=auth_token, silent=True)
+        client_args.update(kwargs)
+        return client_args
 
 
 class SynapseGetDataFrameTask(SynapseBaseTask):
-    def run(self, client, synapse_id, sep=None):
+    def run(self, client_args, synapse_id, sep=None):
+        client = self.get_client(client_args)
         file = client.get(synapse_id, downloadFile=False)
         file_handle_id = file._file_handle.id
         file_temp_url = client.restGET(
@@ -41,7 +46,8 @@ class SynapseGetDataFrameTask(SynapseBaseTask):
 
 
 class SynapseStoreDataFrameTask(SynapseBaseTask):
-    def run(self, client, data_frame, name, parent_id, sep=","):
+    def run(self, client_args, data_frame, name, parent_id, sep=","):
+        client = self.get_client(client_args)
         with TemporaryDirectory() as dirname:
             fpath = os.path.join(dirname, name)
             content_type = CONTENT_TYPES.get(sep, None)

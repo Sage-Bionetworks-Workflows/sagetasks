@@ -55,3 +55,19 @@ prefect server stop
 ## Thoughts
 
 - The `CavaticaBaseTask` demonstrates a use case for classes (_i.e._ extending `Task`) as opposed to functions (_i.e._ decorated by `@task`). On the other hand, `SynapseBaseTask` doesn't really benefit from the class structure.
+
+- The SevenBridges Python client embeds the client instance into every resource object, which prevents `cloudpickle` to serialize these objects due to `TypeError: cannot pickle '_thread.lock' object`.
+
+  ```python
+  import os
+  import cloudpickle
+  import sevenbridges as sbg
+  api = sbg.Api(url="https://cavatica-api.sbgenomics.com/v2", token=os.environ["SB_AUTH_TOKEN"])
+  proj = api.projects.query(name="include-sandbox")[0]
+  proj._API = None
+  proj._api = None
+  proj._data.api = None
+  pickle = cloudpickle.dumps(proj)
+  ```
+
+- TBD

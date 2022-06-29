@@ -4,6 +4,7 @@ Adapted from code that Tom Yu authored:
 https://github.com/include-dcc/synapse-cavatica/blob/main/scripts/rnaseq_flow.py
 """
 
+import time
 from prefect import Task
 import sevenbridges as sbg
 
@@ -16,6 +17,18 @@ ENDPOINTS = {
 
 
 class SbgBaseTask(Task):
+    def get_client(self, client_args):
+        return sbg.Api(**client_args)
+
+    def purge_api(self, obj):
+        if hasattr(obj, "_API"):
+            obj._API = None
+        if hasattr(obj, "_api"):
+            obj._api = None
+        if hasattr(obj, "_data") and hasattr(obj._data, "api"):
+            obj._data.api = None
+        return obj
+
     def get_or_create(self, get_fn, create_fn):
         collection = get_fn()
         if len(collection) == 0:
@@ -27,18 +40,20 @@ class SbgBaseTask(Task):
             result = collection[0]
         else:
             raise ValueError("There shouldn't be more than one match.")
+        result = self.purge_api(result)
         return result
 
     def run(self):
-        raise NotImplementedError("The `run` method hasn't implemented.")
+        raise NotImplementedError("The `run` method isn't implemented.")
 
 
-class SbgClientTask(SbgBaseTask):
-    def run(self, auth_token, platform="cavatica", endpoint=None):
+class SbgClientArgsTask(SbgBaseTask):
+    def run(self, auth_token, platform="cavatica", endpoint=None, **kwargs):
         assert platform is None or platform in ENDPOINTS
         assert platform or endpoint
         endpoint = endpoint if endpoint else ENDPOINTS[platform]
-        return sbg.Api(url=endpoint, token=auth_token)
+        client_args = dict(url=endpoint, token=auth_token, **kwargs)
+        return client_args
 
 
 class SbgGetProjectTask(SbgBaseTask):
@@ -57,7 +72,8 @@ class SbgGetProjectTask(SbgBaseTask):
 
         return create
 
-    def run(self, client, project_name, billing_group_id):
+    def run(self, client_args, project_name, billing_group_id):
+        client = self.get_client(client_args)
         get_fn = self.get_fn(client, project_name)
         create_fn = self.create_fn(client, project_name, billing_group_id)
         return self.get_or_create(get_fn, create_fn)
@@ -87,8 +103,51 @@ class SbgGetAppTask(SbgBaseTask):
 
         return create
 
-    def run(self, client, app_id, project):
+    def run(self, client_args, app_id, project):
+        client = self.get_client(client_args)
         app_name = app_id.split("/")[-1]
         get_fn = self.get_fn(client, project, app_name)
         create_fn = self.create_fn(client, project, app_id, app_name)
+        return self.get_or_create(get_fn, create_fn)
+
+
+class SbgGetVolumeTask(SbgBaseTask):
+    @staticmethod
+    def get_fn(client, id=None, name=None):
+        assert id or name  # At least one is given
+        assert not (id and name)  # Both cannot be given
+
+        def get_by_id():
+            try:
+                volume = client.volumes.get(id=id)
+                volumes = [volume]
+            except sbg.errors.NotFound:
+                volumes = []
+            return volumes
+
+        def get_by_name():
+            volumes = client.volumes.query()
+            volumes = [vol for vol in volumes if vol.name == name]
+            return volumes
+
+        if id:
+            return get_by_id
+        elif name:
+            return get_by_name
+        else:
+            raise NotImplementedError("The `get` method isn't implemented.")
+
+    @staticmethod
+    def create_fn():
+        def create():
+            # Not implemented because we expect these volumes to be automatically
+            # configured when the Cavatica project is created by Data Tracker
+            raise NotImplementedError("The `create` method isn't implemented.")
+
+        return create
+
+    def run(self, client_args, id=None, name=None):
+        client = self.get_client(client_args)
+        get_fn = self.get_fn(client, id, name)
+        create_fn = self.create_fn()
         return self.get_or_create(get_fn, create_fn)
