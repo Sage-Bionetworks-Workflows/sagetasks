@@ -8,16 +8,16 @@ from prefect import Flow, Parameter, task
 from prefect.tasks.secrets import EnvVarSecret
 
 # specific task class imports
-from sagetasks.synapse import (
-    SynapseClientArgsTask,
-    SynapseGetDataFrameTask,
-    SynapseStoreDataFrameTask,
+from sagetasks.synapse.prefect import (
+    syn_bundle_client_args,
+    syn_get_dataframe,
+    syn_store_dataframe,
 )
-from sagetasks.sevenbridges import (
-    SbgClientArgsTask,
-    SbgGetProjectTask,
-    SbgGetAppTask,
-    SbgGetVolumeTask,
+from sagetasks.sevenbridges.prefect import (
+    sbg_bundle_client_args,
+    sbg_get_project_id,
+    sbg_get_imported_app_id,
+    sbg_get_volume_id,
 )
 
 
@@ -62,21 +62,7 @@ def prepare_samplesheet(manifest):
 
 
 # --------------------------------------------------------------
-# Instantiate task classes
-# --------------------------------------------------------------
 
-# Synapse tasks
-get_syn_args = SynapseClientArgsTask(name="Collect args for Synapse client")
-get_manifest = SynapseGetDataFrameTask(name="Download manifest file from Synapse")
-upload_samplesheet = SynapseStoreDataFrameTask(name="Upload sample sheet to Synapse")
-
-# Cavatica tasks
-get_sbg_args = SbgClientArgsTask(name="Collect args for Cavatica client")
-get_project = SbgGetProjectTask(name="Retrieve Cavatica project")
-get_app = SbgGetAppTask(name="Retrieve Cavatica app")
-get_volume = SbgGetVolumeTask(name="Retrieve Cavatica volume")
-
-# --------------------------------------------------------------
 # Open a Flow context and use the functional API (if possible)
 # --------------------------------------------------------------
 
@@ -86,7 +72,7 @@ with Flow("Demo") as flow:
     manifest_id = Parameter("manifest_id")
     samplesheet_parent = Parameter("samplesheet_parent")
     project_name = Parameter("project_name")
-    billing_group_id = Parameter("billing_group_id")
+    billing_group_name = Parameter("billing_group_name")
     app_id = Parameter("app_id")
     volume_name = Parameter("volume_name")
 
@@ -95,14 +81,14 @@ with Flow("Demo") as flow:
     sbg_token = EnvVarSecret("SB_AUTH_TOKEN")
 
     # Client arguments
-    syn_args = get_syn_args(syn_token)
-    sbg_args = get_sbg_args(sbg_token)
+    syn_args = syn_bundle_client_args(syn_token)
+    sbg_args = sbg_bundle_client_args(sbg_token)
 
     # Extract
-    manifest = get_manifest(syn_args, manifest_id, sep=",")
-    project = get_project(sbg_args, project_name, billing_group_id)
-    app = get_app(sbg_args, app_id, project)
-    volume = get_volume(sbg_args, name=volume_name)
+    manifest = syn_get_dataframe(syn_args, manifest_id, sep=",")
+    project_id = sbg_get_project_id(sbg_args, project_name, billing_group_name)
+    app = sbg_get_imported_app_id(sbg_args, project_id, app_id)
+    volume = sbg_get_volume_id(sbg_args, volume_name)
 
     # Transform
     samplesheet = prepare_samplesheet(manifest)
@@ -112,13 +98,13 @@ with Flow("Demo") as flow:
     # Load
     print_columns(manifest)
     print_values.map(head_rows)
-    upload_samplesheet(syn_args, samplesheet, "samplesheet.csv", samplesheet_parent)
+    syn_store_dataframe(syn_args, samplesheet, "samplesheet.csv", samplesheet_parent)
 
 params = {
     "manifest_id": "syn31937724",
     "samplesheet_parent": "syn31937712",
     "project_name": "include-sandbox",
-    "billing_group_id": "6428bd01-8c8a-4d57-b18d-be5632f701ed",
+    "billing_group_name": "include-dev",
     "app_id": "cavatica/apps-publisher/kfdrc-rnaseq-workflow",
     "volume_name": "include_sandbox_ro",
 }
