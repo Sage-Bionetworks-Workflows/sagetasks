@@ -12,12 +12,12 @@ def get_project_id(client_args, project_name, billing_group_name):
     return project_id
 
 
-def get_imported_app_id(client_args, project, app_id=None):
+def get_copied_app_id(client_args, project, app_id=None):
     utils = SbgUtils(client_args)
     utils.open_project(project)
-    imported_app = utils.get_or_create_imported_app(app_id)
-    imported_app_id = utils.extract_id(imported_app)
-    return imported_app_id
+    copied_app = utils.get_or_create_copied_app(app_id)
+    copied_app_id = utils.extract_id(copied_app)
+    return copied_app_id
 
 
 def get_volume_id(client_args, volume_name=None, volume_id=None):
@@ -28,3 +28,13 @@ def get_volume_id(client_args, volume_name=None, volume_id=None):
     volume = volumes[0]
     volume_id = utils.extract_id(volume)
     return volume_id
+
+
+def import_volume_file(client_args, project, volume_id, volume_path, project_path):
+    utils = SbgUtils(client_args)
+    utils.open_project(project)
+    imported_file = utils.get_or_create_volume_file(
+        volume_id, volume_path, project_path
+    )
+    imported_file_id = utils.extract_id(imported_file)
+    return imported_file_id

@@ -1,7 +1,11 @@
 from functools import partial
+from pathlib import PurePosixPath
 import re
+import time
 import sevenbridges as sbg
 from sevenbridges.meta.transformer import Transform
+from sevenbridges.models.project import Project
+from sevenbridges import ImportExportState
 
 
 ENDPOINTS = {
@@ -31,8 +35,7 @@ class SbgUtils:
             result = collection[0]
         else:
             raise ValueError("There shouldn't be more than one match.")
-        result_id = self.extract_id(result)
-        return result_id
+        return result
 
     @staticmethod
     def bundle_client_args(auth_token, platform="cavatica", endpoint=None, **kwargs):
@@ -117,15 +120,15 @@ class SbgUtils:
                 suffix = "-1"
         return suffix
 
-    def get_imported_app_name(self, app_id, increment=False):
+    def get_copied_app_name(self, app_id, increment=False):
         public_app = self.get_public_app(app_id)
         app_slug = public_app.id.split("/")[-1]
         suffix = self._get_app_suffix(app_slug, increment)
         app_name = f"{app_slug}{suffix}"
         return app_name
 
-    def get_imported_app(self, app_id):
-        app_name = self.get_imported_app_name(app_id)
+    def get_copied_app(self, app_id):
+        app_name = self.get_copied_app_name(app_id)
         apps = self.client.apps.query(project=self.project, q=app_name)
         # If multiple projects exist, pick the one with the shortest name
         apps = [x for x in apps if not x.raw.get("sbg:archived", False)]
@@ -136,12 +139,12 @@ class SbgUtils:
 
     def import_app(self, app_id):
         public_app = self.get_public_app(app_id)
-        app_name = self.get_imported_app_name(app_id, increment=True)
+        app_name = self.get_copied_app_name(app_id, increment=True)
         project_app = public_app.copy(project=self.project, name=app_name)
         return project_app
 
-    def get_or_create_imported_app(self, app_id):
-        get_fn = partial(self.get_imported_app, app_id)
+    def get_or_create_copied_app(self, app_id):
+        get_fn = partial(self.get_copied_app, app_id)
         create_fn = partial(self.import_app, app_id)
         return self.get_or_create(get_fn, create_fn)
 
@@ -166,3 +169,77 @@ class SbgUtils:
         else:
             matches = self._get_volume_by_id(volume_id)
         return matches
+
+    def _get_parent_args(self, parent):
+        if isinstance(parent, Project):
+            parent_args = {"project": parent}
+        else:
+            parent_args = {"parent": parent}
+        return parent_args
+
+    def get_folder(self, folder_name, parent):
+        parent_args = self._get_parent_args(parent)
+        children = self.client.files.query(**parent_args)
+        folders = [x for x in children if getattr(x, "type", None) == "folder"]
+        matches = [x for x in folders if x.name == folder_name]
+        return matches
+
+    def create_folder(self, folder_name, parent):
+        parent_args = self._get_parent_args(parent)
+        folder = self.client.files.create_folder(name=folder_name, **parent_args)
+        return folder
+
+    def get_or_create_folder(self, folder_name, parent):
+        get_fn = partial(self.get_folder, folder_name, parent)
+        create_fn = partial(self.create_folder, folder_name, parent)
+        return self.get_or_create(get_fn, create_fn)
+
+    def get_folders_recursively(self, folder_path, parent=None):
+        folder_names = folder_path.parts
+        if parent is None:
+            parent = self.project
+        for folder_name in folder_names:
+            folder = self.get_or_create_folder(folder_name, parent)
+            parent = folder
+        return folder
+
+    def get_file(self, file_name, parent):
+        parent_args = self._get_parent_args(parent)
+        children = self.client.files.query(**parent_args)
+        files = [x for x in children if getattr(x, "type", None) == "file"]
+        matches = [x for x in files if x.name == file_name]
+        return matches
+
+    def _wait_for_import_job(self, import_job):
+        while True:
+            import_state = import_job.reload().state
+            if import_state in (ImportExportState.COMPLETED, ImportExportState.FAILED):
+                break
+            time.sleep(5)
+        return import_job
+
+    def _get_imported_file(self, import_job):
+        if import_job.state == ImportExportState.COMPLETED:
+            imported_file = import_job.result
+        elif import_job.state == ImportExportState.FAILED:
+            raise sbg.SbgError("Failed to import file from volume")
+        else:
+            raise sbg.SbgError("Import job not complete yet")
+        return imported_file
+
+    def import_volume_file(self, volume_id, volume_path, parent):
+        import_job = self.client.imports.submit_import(
+            volume=volume_id, parent=parent, location=volume_path
+        )
+        import_job = self._wait_for_import_job(import_job)
+        imported_file = self._get_imported_file(import_job)
+        return imported_file
+
+    def get_or_create_volume_file(self, volume_id, volume_path, project_path):
+        project_path = PurePosixPath(project_path)
+        dir_name = project_path.parent
+        file_name = project_path.name
+        parent = self.get_folders_recursively(dir_name)
+        get_fn = partial(self.get_file, file_name, parent)
+        create_fn = partial(self.import_volume_file, volume_id, volume_path, parent)
+        return self.get_or_create(get_fn, create_fn)
