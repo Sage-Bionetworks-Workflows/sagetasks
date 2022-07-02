@@ -53,11 +53,23 @@ def prepare_samplesheet(manifest):
     return samplesheet
 
 
-@task(nout=2)
-def prepare_file_imports(manifest):
-    volume_paths = manifest.s3_uri.str.replace("s3://include-sandbox/synapse/", "", 1)
-    project_paths = "synapse/" + manifest.component + "/" + manifest.filepath
-    return (volume_paths.to_list(), project_paths.to_list())
+@task
+def prepare_file_imports(row):
+    s3_uri_prefix = "s3://include-sandbox/synapse/"
+    row["volume_path"] = row.s3_uri.replace(s3_uri_prefix, "", 1)
+    row["project_path"] = "synapse/" + row.component + "/" + row.filepath
+    return row
+
+
+@task
+def call_import_volume_file(sbg_args, project_id, volume_id, row):
+    sbg.import_volume_file.run(
+        sbg_args,
+        project_id,
+        volume_id,
+        row.volume_path,
+        row.project_path,
+    )
 
 
 # --------------------------------------------------------------
@@ -91,17 +103,16 @@ with Flow("Demo") as flow:
     # Transform
     samplesheet = prepare_samplesheet(manifest)
     head = head_df(manifest, 3)
-    # head_rows = split_rows(head)
-    volume_paths, project_paths = prepare_file_imports(head)
+    head_rows = split_rows(head)
+    head_rows2 = prepare_file_imports.map(head_rows)
 
     # Load
-    # print_values(volume_paths)
-    sbg.import_volume_file.map(
+    print_values(head_rows2)
+    call_import_volume_file.map(
         unmapped(sbg_args),
         unmapped(project_id),
         unmapped(volume_id),
-        volume_paths,
-        project_paths,
+        head_rows2,
     )
     syn.store_dataframe(syn_args, samplesheet, "samplesheet.csv", samplesheet_parent)
 
