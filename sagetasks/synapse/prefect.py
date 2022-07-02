@@ -1,21 +1,15 @@
 from prefect import task
-from sagetasks.synapse.general import (
-    syn_bundle_client_args,
-    syn_get_dataframe,
-    syn_store_dataframe,
+import sagetasks.synapse.general as gen
+
+
+bundle_client_args = task(
+    gen.bundle_client_args, name="Synapse - Bundle client arguments"
 )
 
 
-syn_bundle_client_args = task(
-    syn_bundle_client_args, name="Synapse - Bundle client arguments"
-)
+get_dataframe = task(gen.get_dataframe, name="Synapse - Download and load data frame")
 
 
-syn_get_dataframe = task(
-    syn_get_dataframe, name="Synapse - Download and load data frame"
-)
-
-
-syn_store_dataframe = task(
-    syn_store_dataframe, name="Synapse - Serialize and upload data frame"
+store_dataframe = task(
+    gen.store_dataframe, name="Synapse - Serialize and upload data frame"
 )

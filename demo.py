@@ -7,18 +7,9 @@ from sys import argv
 from prefect import Flow, Parameter, task
 from prefect.tasks.secrets import EnvVarSecret
 
-# specific task class imports
-from sagetasks.synapse.prefect import (
-    syn_bundle_client_args,
-    syn_get_dataframe,
-    syn_store_dataframe,
-)
-from sagetasks.sevenbridges.prefect import (
-    sbg_bundle_client_args,
-    sbg_get_project_id,
-    sbg_get_imported_app_id,
-    sbg_get_volume_id,
-)
+# specific task function imports
+import sagetasks.synapse.prefect as syn
+import sagetasks.sevenbridges.prefect as sbg
 
 
 # --------------------------------------------------------------
@@ -81,14 +72,14 @@ with Flow("Demo") as flow:
     sbg_token = EnvVarSecret("SB_AUTH_TOKEN")
 
     # Client arguments
-    syn_args = syn_bundle_client_args(syn_token)
-    sbg_args = sbg_bundle_client_args(sbg_token)
+    syn_args = syn.bundle_client_args(syn_token)
+    sbg_args = sbg.bundle_client_args(sbg_token)
 
     # Extract
-    manifest = syn_get_dataframe(syn_args, manifest_id, sep=",")
-    project_id = sbg_get_project_id(sbg_args, project_name, billing_group_name)
-    app = sbg_get_imported_app_id(sbg_args, project_id, app_id)
-    volume = sbg_get_volume_id(sbg_args, volume_name)
+    manifest = syn.get_dataframe(syn_args, manifest_id, sep=",")
+    project_id = sbg.get_project_id(sbg_args, project_name, billing_group_name)
+    app = sbg.get_imported_app_id(sbg_args, project_id, app_id)
+    volume = sbg.get_volume_id(sbg_args, volume_name)
 
     # Transform
     samplesheet = prepare_samplesheet(manifest)
@@ -98,7 +89,7 @@ with Flow("Demo") as flow:
     # Load
     print_columns(manifest)
     print_values.map(head_rows)
-    syn_store_dataframe(syn_args, samplesheet, "samplesheet.csv", samplesheet_parent)
+    syn.store_dataframe(syn_args, samplesheet, "samplesheet.csv", samplesheet_parent)
 
 params = {
     "manifest_id": "syn31937724",

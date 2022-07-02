@@ -1,26 +1,19 @@
 from prefect import task
-from sagetasks.sevenbridges.general import (
-    sbg_bundle_client_args,
-    sbg_get_project_id,
-    sbg_get_imported_app_id,
-    sbg_get_volume_id,
+import sagetasks.sevenbridges.general as gen
+
+
+bundle_client_args = task(
+    gen.bundle_client_args, name="SevenBridges - Bundle client arguments"
 )
 
 
-sbg_bundle_client_args = task(
-    sbg_bundle_client_args, name="SevenBridges - Bundle client arguments"
-)
+get_project_id = task(gen.get_project_id, name="SevenBridges - Get (or create) project")
 
 
-sbg_get_project_id = task(
-    sbg_get_project_id, name="SevenBridges - Get (or create) project"
-)
-
-
-sbg_get_imported_app_id = task(
-    sbg_get_imported_app_id,
+get_imported_app_id = task(
+    gen.get_imported_app_id,
     name="SevenBridges - Get (or import) an imported copy of a public app",
 )
 
 
-sbg_get_volume_id = task(sbg_get_volume_id, name="SevenBridges - Get a cloud volume")
+get_volume_id = task(gen.get_volume_id, name="SevenBridges - Get a cloud volume")
