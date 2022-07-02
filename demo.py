@@ -63,13 +63,15 @@ def prepare_file_imports(row):
 
 @task
 def call_import_volume_file(sbg_args, project_id, volume_id, row):
-    sbg.import_volume_file.run(
+    imported_file_id = sbg.import_volume_file.run(
         sbg_args,
         project_id,
         volume_id,
         row.volume_path,
         row.project_path,
     )
+    row["imported_file_id"] = imported_file_id
+    return row
 
 
 # --------------------------------------------------------------
@@ -102,18 +104,17 @@ with Flow("Demo") as flow:
 
     # Transform
     samplesheet = prepare_samplesheet(manifest)
-    head = head_df(manifest, 3)
-    head_rows = split_rows(head)
-    head_rows2 = prepare_file_imports.map(head_rows)
+    rows = split_rows(manifest)
+    rows_prep = prepare_file_imports.map(rows)
 
     # Load
-    print_values(head_rows2)
-    call_import_volume_file.map(
+    rows_imp = call_import_volume_file.map(
         unmapped(sbg_args),
         unmapped(project_id),
         unmapped(volume_id),
-        head_rows2,
+        rows_prep,
     )
+    print_values(rows_imp)
     syn.store_dataframe(syn_args, samplesheet, "samplesheet.csv", samplesheet_parent)
 
 params = {
