@@ -9,12 +9,14 @@ CONTENT_TYPES = {",": "text/csv", "\t": "text/tab-separated-values"}
 
 
 def bundle_client_args(auth_token, **kwargs):
+    """Synapse - Bundle client arguments"""
     client_args = dict(authToken=auth_token, silent=True)
     client_args.update(kwargs)
     return client_args
 
 
 def get_dataframe(client_args, synapse_id, sep=None):
+    """Synapse - Download and load data frame"""
     client = synapseclient.login(**client_args)
     file = client.get(synapse_id, downloadFile=False)
     file_handle_id = file._file_handle.id
@@ -32,6 +34,7 @@ def get_dataframe(client_args, synapse_id, sep=None):
 
 
 def store_dataframe(client_args, data_frame, name, parent_id, sep=","):
+    """Synapse - Serialize and upload data frame"""
     client = synapseclient.login(**client_args)
     with TemporaryDirectory() as dirname:
         fpath = os.path.join(dirname, name)

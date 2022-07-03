@@ -1,15 +1,4 @@
-from prefect import task
+from sagetasks.utils import to_prefect_tasks
 import sagetasks.synapse.general as gen
 
-
-bundle_client_args = task(
-    gen.bundle_client_args, name="Synapse - Bundle client arguments"
-)
-
-
-get_dataframe = task(gen.get_dataframe, name="Synapse - Download and load data frame")
-
-
-store_dataframe = task(
-    gen.store_dataframe, name="Synapse - Serialize and upload data frame"
-)
+to_prefect_tasks(__name__, gen)
