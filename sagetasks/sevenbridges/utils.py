@@ -194,8 +194,7 @@ class SbgUtils:
         create_fn = partial(self.create_folder, folder_name, parent)
         return self.get_or_create(get_fn, create_fn)
 
-    def get_folders_recursively(self, folder_path, parent=None):
-        folder_names = folder_path.parts
+    def get_folders_recursively(self, folder_names, parent=None):
         if parent is None:
             parent = self.project
         for folder_name in folder_names:
@@ -239,7 +238,8 @@ class SbgUtils:
         project_path = PurePosixPath(project_path)
         dir_name = project_path.parent
         file_name = project_path.name
-        parent = self.get_folders_recursively(dir_name)
+        folder_names = dir_name.parts
+        parent = self.get_folders_recursively(folder_names)
         get_fn = partial(self.get_file, file_name, parent)
         create_fn = partial(self.import_volume_file, volume_id, volume_path, parent)
         return self.get_or_create(get_fn, create_fn)
