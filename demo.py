@@ -11,16 +11,14 @@ from prefect.tasks.secrets import EnvVarSecret
 # specific task function imports
 import sagetasks.synapse.prefect as syn
 import sagetasks.sevenbridges.prefect as sbg
-from include import manifest_to_kfdrc_rnaseq_workflow_inputs_factory
+from sagetasks.sevenbridges.inputs import manifest_to_kf_rnaseq_app_inputs_factory
 
 # --------------------------------------------------------------
 # Generate custom functions using factories
 # --------------------------------------------------------------
 
 
-prepare_task_inputs = manifest_to_kfdrc_rnaseq_workflow_inputs_factory(
-    file_col="imported_file_id"
-)
+prepare_task_inputs = manifest_to_kf_rnaseq_app_inputs_factory()
 
 
 # --------------------------------------------------------------
@@ -65,7 +63,7 @@ def call_import_volume_file(sbg_args, project_id, volume_id, row):
         row.volume_path,
         row.project_path,
     )
-    row["imported_file_id"] = imported_file_id
+    row["cavatica_file_id"] = imported_file_id
     return row
 
 

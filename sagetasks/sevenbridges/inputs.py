@@ -46,8 +46,8 @@ def format_rg_val(val):
 
 # TODO: Currently assumes paired-end data
 # TODO: Separate function to import suggested reference files
-# TODO: Improve task naming
-def manifest_to_kfdrc_rnaseq_workflow_inputs_factory(
+# TODO: Add support for (and validate) different versions of the workflow
+def manifest_to_kf_rnaseq_app_inputs_factory(
     file_col="cavatica_file_id",
     sample_col="sample_id",
     readlen_col="read_length",
@@ -59,7 +59,7 @@ def manifest_to_kfdrc_rnaseq_workflow_inputs_factory(
     library_col="library_id",
     platform_col="platform",
 ):
-    def manifest_to_kfdrc_rnaseq_workflow_inputs(client, manifest):
+    def manifest_to_kf_rnaseq_app_inputs(client, manifest):
         # Unpacking valid values
         r1_val, r2_val = orientation_vals
         strandedness_map = dict(zip(strandedness_vals, STRANDEDNESS_DEFAULTS))
@@ -117,4 +117,4 @@ def manifest_to_kfdrc_rnaseq_workflow_inputs_factory(
 
             yield task_name, inputs, callback_fn
 
-    return manifest_to_kfdrc_rnaseq_workflow_inputs
+    return manifest_to_kf_rnaseq_app_inputs
