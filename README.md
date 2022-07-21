@@ -12,6 +12,13 @@ Inspired by [Pocket/data-flows](https://github.com/Pocket/data-flows).
 
 ## Demo Usage
 
+### Getting access
+
+To run this demo, you'll need the following access:
+
+- You need to ask Bruno for edit-access on the [INCLUDE Sandbox](https://www.synapse.org/#!Synapse:syn31937702/wiki/) Synapse project.
+- You need to ask Bruno for edit-access on the [include-sandbox](https://cavatica.sbgenomics.com/u/bgrande/include-sandbox) Cavatica project.
+
 ### Getting set up
 
 ```sh
