@@ -133,3 +133,6 @@ dmypy.json
 
 # Files for testing Python code
 playground/
+
+# Hidden OS files
+.DS_Store
