@@ -130,3 +130,6 @@ dmypy.json
 
 # VisualStudio Code
 .vscode
+
+# Files for testing Python code
+playground/

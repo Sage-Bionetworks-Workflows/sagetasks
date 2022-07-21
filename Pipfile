@@ -11,6 +11,8 @@ pandas = "*"
 
 [dev-packages]
 black = "*"
+ipykernel = "*"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.8"
