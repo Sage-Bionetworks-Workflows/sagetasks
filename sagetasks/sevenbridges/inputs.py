@@ -47,6 +47,7 @@ def format_rg_val(val):
 # TODO: Currently assumes paired-end data
 # TODO: Separate function to import suggested reference files
 # TODO: Add support for (and validate) different versions of the workflow
+# TODO: Add mapping between app IDs (and versions?) to factory functions
 def manifest_to_kf_rnaseq_app_inputs_factory(
     file_col="cavatica_file_id",
     sample_col="sample_id",
