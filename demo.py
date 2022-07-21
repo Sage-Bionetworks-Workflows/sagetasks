@@ -11,6 +11,16 @@ from prefect.tasks.secrets import EnvVarSecret
 # specific task function imports
 import sagetasks.synapse.prefect as syn
 import sagetasks.sevenbridges.prefect as sbg
+from include import manifest_to_kfdrc_rnaseq_workflow_inputs_factory
+
+# --------------------------------------------------------------
+# Generate custom functions using factories
+# --------------------------------------------------------------
+
+
+prepare_task_inputs = manifest_to_kfdrc_rnaseq_workflow_inputs_factory(
+    file_col="imported_file_id"
+)
 
 
 # --------------------------------------------------------------
@@ -104,10 +114,14 @@ with Flow("Demo") as flow:
         rows_prep,
     )
     sbg_manifest = concat_rows(rows_imp)
+    drafted_tasks = sbg.create_tasks(
+        sbg_args, project_id, app_id, sbg_manifest, prepare_task_inputs
+    )
+    print_values(drafted_tasks)
     syn.store_dataframe(syn_args, sbg_manifest, "sbg_manifest.csv", synapse_folder)
 
 params = {
-    "manifest_id": "syn31937724",
+    "manifest_id": "syn33335513",
     "synapse_folder": "syn33335225",
     "project_name": "include-sandbox",
     "billing_group_name": "include-dev",

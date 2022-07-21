@@ -246,3 +246,24 @@ class SbgUtils:
         get_fn = partial(self.get_file, file_name, parent)
         create_fn = partial(self.import_volume_file, volume_id, volume_path, parent)
         return self.get_or_create(get_fn, create_fn)
+
+    def get_task(self, task_name=None, app_id=None):
+        matches = self.client.tasks.query(project=self.project)
+        if task_name:
+            matches = [t for t in matches if t.name == task_name]
+        if app_id:
+            matches = [t for t in matches if app_id in t.app]
+        return matches
+
+    def create_task(self, app_id, inputs, task_name, callback_fn=None):
+        task = self.client.tasks.create(
+            name=task_name, project=self.project, app=app_id, inputs=inputs, run=False
+        )
+        if callback_fn:
+            callback_fn(task)
+        return task
+
+    def get_or_create_task(self, app_id, inputs, task_name, callback_fn=None):
+        get_fn = partial(self.get_task, task_name, app_id)
+        create_fn = partial(self.create_task, app_id, inputs, task_name, callback_fn)
+        return self.get_or_create(get_fn, create_fn)
