@@ -3,8 +3,8 @@
 # --------------------------------------------------------------
 
 # basic imports
-from pathlib import PurePosixPath
 from sys import argv
+import pandas as pd
 from prefect import Flow, Parameter, task, unmapped
 from prefect.tasks.secrets import EnvVarSecret
 
@@ -39,21 +39,6 @@ def print_values(x):
 
 
 @task
-def prepare_samplesheet(manifest):
-    samplesheet = (
-        manifest.pivot(
-            index=["sample", "run", "strandedness"],
-            columns="orientation",
-            values="s3_uri",
-        )
-        .reset_index()
-        .rename(columns={"R1": "fastq_1", "R2": "fastq_2"})
-        .loc[:, ["sample", "fastq_1", "fastq_2", "strandedness"]]
-    )
-    return samplesheet
-
-
-@task
 def prepare_file_imports(row):
     s3_uri_prefix = "s3://include-sandbox/synapse/"
     row["volume_path"] = row.s3_uri.replace(s3_uri_prefix, "", 1)
@@ -74,6 +59,11 @@ def call_import_volume_file(sbg_args, project_id, volume_id, row):
     return row
 
 
+@task
+def concat_rows(rows):
+    return pd.concat(rows, axis=1).T
+
+
 # --------------------------------------------------------------
 # Open a Flow context and use the functional API (if possible)
 # --------------------------------------------------------------
@@ -82,7 +72,7 @@ with Flow("Demo") as flow:
 
     # Parameters
     manifest_id = Parameter("manifest_id")
-    samplesheet_parent = Parameter("samplesheet_parent")
+    synapse_folder = Parameter("synapse_folder")
     project_name = Parameter("project_name")
     billing_group_name = Parameter("billing_group_name")
     app_id = Parameter("app_id")
@@ -103,7 +93,6 @@ with Flow("Demo") as flow:
     volume_id = sbg.get_volume_id(sbg_args, volume_name)
 
     # Transform
-    samplesheet = prepare_samplesheet(manifest)
     rows = split_rows(manifest)
     rows_prep = prepare_file_imports.map(rows)
 
@@ -114,12 +103,12 @@ with Flow("Demo") as flow:
         unmapped(volume_id),
         rows_prep,
     )
-    print_values(rows_imp)
-    syn.store_dataframe(syn_args, samplesheet, "samplesheet.csv", samplesheet_parent)
+    sbg_manifest = concat_rows(rows_imp)
+    syn.store_dataframe(syn_args, sbg_manifest, "sbg_manifest.csv", synapse_folder)
 
 params = {
     "manifest_id": "syn31937724",
-    "samplesheet_parent": "syn31937712",
+    "synapse_folder": "syn33335225",
     "project_name": "include-sandbox",
     "billing_group_name": "include-dev",
     "app_id": "cavatica/apps-publisher/kfdrc-rnaseq-workflow",

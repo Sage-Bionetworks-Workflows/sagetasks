@@ -6,6 +6,7 @@ import sevenbridges as sbg
 from sevenbridges.meta.transformer import Transform
 from sevenbridges.models.project import Project
 from sevenbridges import ImportExportState
+from sevenbridges.http.error_handlers import rate_limit_sleeper, maintenance_sleeper
 
 
 ENDPOINTS = {
@@ -17,7 +18,9 @@ ENDPOINTS = {
 
 class SbgUtils:
     def __init__(self, client_args) -> None:
-        self.client = sbg.Api(**client_args)
+        self.client = sbg.Api(
+            **client_args, error_handlers=[rate_limit_sleeper, maintenance_sleeper]
+        )
         self._project = None
 
     def extract_id(self, resource):
