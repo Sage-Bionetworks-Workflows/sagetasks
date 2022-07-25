@@ -43,3 +43,15 @@ def import_volume_file(client_args, project, volume_id, volume_path, project_pat
     )
     imported_file_id = utils.extract_id(imported_file)
     return imported_file_id
+
+
+def create_tasks(client_args, project, app_id, manifest, inputs_fn):
+    """SevenBridges - Create draft tasks"""
+    utils = SbgUtils(client_args)
+    utils.open_project(project)
+    draft_task_ids = list()
+    for task_name, inputs, callback_fn in inputs_fn(utils.client, manifest):
+        task = utils.get_or_create_task(app_id, inputs, task_name, callback_fn)
+        task_id = utils.extract_id(task)
+        draft_task_ids.append(task_id)
+    return draft_task_ids
