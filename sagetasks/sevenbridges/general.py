@@ -46,7 +46,7 @@ def import_volume_file(client_args, project, volume_id, volume_path, project_pat
 
 
 def create_tasks(client_args, project, app_id, manifest, inputs_fn):
-    """SevenBridges - Create a draft tasks"""
+    """SevenBridges - Create draft tasks"""
     utils = SbgUtils(client_args)
     utils.open_project(project)
     draft_task_ids = list()

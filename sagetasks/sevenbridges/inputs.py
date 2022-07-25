@@ -2,6 +2,7 @@ from copy import deepcopy
 import re
 import numpy as np
 
+# Parameters used in GTEx pipeline for normal (i.e., non-tumor) samples
 GTEX_NORMAL_PARAMS = {
     "alignInsertionFlush": "None",
     "alignIntronMax": 1000000,
@@ -29,6 +30,7 @@ TUMOR_REGEX = re.compile(r"tumou?r")
 
 
 def get_unique_value(df, col, default=None):
+    """Retrieves unique scalar value from Pandas DataFrame column."""
     if col not in df and default is not None:
         raw = [default]
     else:
@@ -41,6 +43,7 @@ def get_unique_value(df, col, default=None):
 
 
 def format_rg_val(val):
+    """Replaces all whitespace from input string with underscores."""
     return re.sub(r"\s", "_", val)
 
 
@@ -60,7 +63,33 @@ def manifest_to_kf_rnaseq_app_inputs_factory(
     library_col="library_id",
     platform_col="platform",
 ):
+    """Creates function for generating the KF RNA-seq app inputs from a file manifest.
+
+    Args:
+        file_col (str, optional): Manifest column name for Cavatica file IDs.
+            Defaults to "cavatica_file_id".
+        sample_col (str, optional): Manifest column name for sample IDs.
+            Defaults to "sample_id".
+        readlen_col (str, optional): Manifest column name for read lengths.
+            Defaults to "read_length".
+        sampletype_col (str, optional): Manifest column name for sample types
+            (e.g., tumor vs normal). Defaults to "sample_type".
+        orientation_col (str, optional): Manifest column name for read orientations.
+            Defaults to "read_orientation".
+        orientation_vals (tuple, optional): Manifest column values for mapping to
+            R1 and R2. Defaults to ("R1", "R2").
+        strandedness_col (str, optional): Manifest column name for RNA-seq strandedness.
+            Defaults to "strandedness".
+        strandedness_vals (list of str, optional): Manifest column values for mapping
+            to the defaults. Defaults to ("default", "rf-stranded", "fr-stranded").
+        library_col (str, optional): Manifest column name for library IDs.
+            Defaults to "library_id".
+        platform_col (str, optional): Manifest column name for sequencing platforms.
+            Defaults to "platform".
+    """
+
     def manifest_to_kf_rnaseq_app_inputs(client, manifest):
+        """Prepares KF RNA-seq app inputs from file manifest."""
         # Unpacking valid values
         r1_val, r2_val = orientation_vals
         strandedness_map = dict(zip(strandedness_vals, STRANDEDNESS_DEFAULTS))
