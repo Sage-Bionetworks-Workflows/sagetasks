@@ -45,20 +45,13 @@ pipenv run python demo.py
 You'll need to [get set up](#getting-set-up) first.
 
 ```sh
-# Deploy Prefect Server in the background
-prefect server start --detach
+# Deploy Prefect Server (Orion)
+prefect orion start
 
-# Create a project in Prefect Server
-prefect create project "demo"
+# Explore the flow runs in Prefect Server
+# Usually hosted at http://127.0.0.1:4200/
 
-# Run the demo in "register" mode
-pipenv run python demo.py register
-
-# Explore the flow under the demo project in Prefect Server
-# Usually hosted at http://127.0.0.1:8080/
-
-# Stop the running containers
-prefect server stop
+# Stop the running server with Ctrl-C
 ```
 
 ## Thoughts

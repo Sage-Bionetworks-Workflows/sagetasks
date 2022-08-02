@@ -4,8 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+prefect = ">=2"
+apache-airflow = ">=2.3"
 synapseclient = "*"
-prefect = {extras = ["viz"], version = "*"}
 sevenbridges-python = "*"
 pandas = "*"
 
@@ -15,4 +16,4 @@ ipykernel = "*"
 python-dotenv = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.10"
