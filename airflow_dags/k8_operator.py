@@ -23,7 +23,7 @@ with DAG(
     k = KubernetesPodOperator(
         namespace='airflow',
         name="hello-dry-run",
-        image="sagebionetworks/synapsepythonclient",
+        image="sagebionetworks/genie",
         cmds=["synapse", "login"],
         # arguments=["echo", "$SYNAPSE_AUTH_TOKEN"],
         labels={"foo": "bar"},
