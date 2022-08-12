@@ -1,4 +1,5 @@
 """Example DAG demonstrating the usage of the KubeOperator."""
+import pendulum
 
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
@@ -7,7 +8,8 @@ from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import Kubernete
 
 
 with DAG(
-    dag_id='k8_test'
+    dag_id='k8_test',
+    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
 ) as dag:
     run_this_last = EmptyOperator(
         task_id='run_this_last',
