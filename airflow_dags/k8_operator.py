@@ -1,6 +1,11 @@
+"""Example DAG demonstrating the usage of the KubeOperator."""
+
+from airflow import DAG
+
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import (
     KubernetesPodOperator,
 )
+
 with DAG(
     dag_id='k8_test'
 ) as dag:
