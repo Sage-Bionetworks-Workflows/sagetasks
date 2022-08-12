@@ -16,13 +16,16 @@ with DAG(
     )
 
     k = KubernetesPodOperator(
+        namespace='airflow',
         name="hello-dry-run",
         image="debian",
         cmds=["bash", "-cx"],
         arguments=["echo", "10"],
         labels={"foo": "bar"},
         task_id="dry_run_demo",
-        do_xcom_push=True,
+        # in_cluster=True,
+        is_delete_operator_pod=True
+        # do_xcom_push=True,
     )
 
     k >> run_this_last
