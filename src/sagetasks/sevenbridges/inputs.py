@@ -1,5 +1,6 @@
-from copy import deepcopy
 import re
+from copy import deepcopy
+
 import numpy as np
 
 # Parameters used in GTEx pipeline for normal (i.e., non-tumor) samples

@@ -1,5 +1,10 @@
 # Sage Prefect Tasks
 
+<!-- 
+[![ReadTheDocs](https://readthedocs.org/projects/sagetasks/badge/?version=latest)](https://sagetasks.readthedocs.io/en/stable/)
+[![PyPI-Server](https://img.shields.io/pypi/v/sagetasks.svg)](https://pypi.org/project/sagetasks/)
+-->
+
 ⚠️ **Warning: This repository is a work in progress.** ⚠️
 
 Python package of useful Prefect tasks for common use cases at Sage Bionetworks.
@@ -78,3 +83,8 @@ prefect server stop
   proj._data.api = None
   pickle = cloudpickle.dumps(proj)
   ```
+
+## Note
+
+This project has been set up using PyScaffold 4.3. For details and usage
+information on PyScaffold see https://pyscaffold.org/.
