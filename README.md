@@ -1,6 +1,6 @@
 # Sage Prefect Tasks
 
-<!-- 
+<!--
 [![ReadTheDocs](https://readthedocs.org/projects/sagetasks/badge/?version=latest)](https://sagetasks.readthedocs.io/en/stable/)
 [![PyPI-Server](https://img.shields.io/pypi/v/sagetasks.svg)](https://pypi.org/project/sagetasks/)
 -->
@@ -76,7 +76,10 @@ prefect server stop
   import os
   import cloudpickle
   import sevenbridges as sbg
-  api = sbg.Api(url="https://cavatica-api.sbgenomics.com/v2", token=os.environ["SB_AUTH_TOKEN"])
+
+  api = sbg.Api(
+      url="https://cavatica-api.sbgenomics.com/v2", token=os.environ["SB_AUTH_TOKEN"]
+  )
   proj = api.projects.query(name="include-sandbox")[0]
   proj._API = None
   proj._api = None
