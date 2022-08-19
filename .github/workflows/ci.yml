@@ -1,7 +1,7 @@
 # GitHub Actions configuration
 # Reference: https://docs.github.com/en/actions
 
-name: tests
+name: Test Python package and publish releases
 
 on:
   push:
