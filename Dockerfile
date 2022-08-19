@@ -4,11 +4,15 @@ WORKDIR /usr/src/app
 
 ARG PSEUDO_VERSION=1
 
-COPY . .
-
 RUN pip install --no-cache-dir pipenv
 
-RUN SETUPTOOLS_SCM_PRETEND_VERSION=${PSEUDO_VERSION} \
-	pipenv install --system
+COPY setup.* Pipfile* ./
+COPY src ./src/
+
+RUN SETUPTOOLS_SCM_PRETEND_VERSION_FOR_SAGETASKS=${PSEUDO_VERSION} \
+    pipenv install --system
+
+RUN --mount=source=.git,target=.git,type=bind \
+    pipenv install --system
 
 CMD [ "python", "-c", "import sagetasks" ]
