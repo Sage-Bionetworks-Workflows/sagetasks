@@ -1,9 +1,8 @@
 import os
 from tempfile import TemporaryDirectory
 
-import synapseclient
 import pandas as pd
-
+import synapseclient
 
 CONTENT_TYPES = {",": "text/csv", "\t": "text/tab-separated-values"}
 

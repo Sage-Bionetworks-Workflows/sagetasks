@@ -1,13 +1,13 @@
-from functools import partial
-from pathlib import PurePosixPath
 import re
 import time
+from functools import partial
+from pathlib import PurePosixPath
+
 import sevenbridges as sbg
+from sevenbridges import ImportExportState
+from sevenbridges.http.error_handlers import maintenance_sleeper, rate_limit_sleeper
 from sevenbridges.meta.transformer import Transform
 from sevenbridges.models.project import Project
-from sevenbridges import ImportExportState
-from sevenbridges.http.error_handlers import rate_limit_sleeper, maintenance_sleeper
-
 
 ENDPOINTS = {
     "cavatica": "https://cavatica-api.sbgenomics.com/v2",

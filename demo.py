@@ -4,13 +4,15 @@
 
 # basic imports
 from sys import argv
+
 import pandas as pd
 from prefect import Flow, Parameter, task, unmapped
 from prefect.tasks.secrets import EnvVarSecret
 
+import sagetasks.sevenbridges.prefect as sbg
+
 # specific task function imports
 import sagetasks.synapse.prefect as syn
-import sagetasks.sevenbridges.prefect as sbg
 from sagetasks.sevenbridges.inputs import manifest_to_kf_rnaseq_app_inputs_factory
 
 # --------------------------------------------------------------
