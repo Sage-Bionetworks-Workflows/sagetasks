@@ -4,16 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-prefect = ">=2"
-apache-airflow = ">=2.3"
-synapseclient = "*"
-sevenbridges-python = "*"
-pandas = "*"
+sagetasks = {editable = true, path = "."}
 
 [dev-packages]
-black = "*"
-ipykernel = "*"
-python-dotenv = "*"
+pre-commit = "*"
+tox = "*"
+sphinx-rtd-theme = "*"
+setuptools = "*"
+pytest = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.10"

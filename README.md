@@ -1,5 +1,10 @@
 # Sage Prefect Tasks
 
+<!--
+[![ReadTheDocs](https://readthedocs.org/projects/sagetasks/badge/?version=latest)](https://sagetasks.readthedocs.io/en/stable/)
+[![PyPI-Server](https://img.shields.io/pypi/v/sagetasks.svg)](https://pypi.org/project/sagetasks/)
+-->
+
 ⚠️ **Warning: This repository is a work in progress.** ⚠️
 
 Python package of useful Prefect tasks for common use cases at Sage Bionetworks.
@@ -64,10 +69,18 @@ prefect orion start
   import os
   import cloudpickle
   import sevenbridges as sbg
-  api = sbg.Api(url="https://cavatica-api.sbgenomics.com/v2", token=os.environ["SB_AUTH_TOKEN"])
+
+  api = sbg.Api(
+      url="https://cavatica-api.sbgenomics.com/v2", token=os.environ["SB_AUTH_TOKEN"]
+  )
   proj = api.projects.query(name="include-sandbox")[0]
   proj._API = None
   proj._api = None
   proj._data.api = None
   pickle = cloudpickle.dumps(proj)
   ```
+
+## Note
+
+This project has been set up using PyScaffold 4.3. For details and usage
+information on PyScaffold see https://pyscaffold.org/.

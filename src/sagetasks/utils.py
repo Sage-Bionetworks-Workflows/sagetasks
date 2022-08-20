@@ -1,5 +1,6 @@
-import sys
 import inspect
+import sys
+
 from prefect import task
 
 
