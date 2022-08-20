@@ -10,10 +10,11 @@ import pandas as pd
 from prefect import flow, task, unmapped
 from prefect.blocks.system import Secret
 
+import sagetasks.sevenbridges.general as sbggen
+import sagetasks.sevenbridges.prefect as sbg
+
 # specific task function imports
 import sagetasks.synapse.prefect as syn
-import sagetasks.sevenbridges.prefect as sbg
-import sagetasks.sevenbridges.general as sbggen
 from sagetasks.sevenbridges.inputs import manifest_to_kf_rnaseq_app_inputs_factory
 
 # --------------------------------------------------------------
