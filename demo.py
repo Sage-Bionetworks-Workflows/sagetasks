@@ -3,12 +3,14 @@
 # --------------------------------------------------------------
 
 # basic imports
+import os
 from sys import argv
 
 import pandas as pd
-from prefect import Flow, Parameter, task, unmapped
-from prefect.tasks.secrets import EnvVarSecret
+from prefect import flow, task, unmapped
+from prefect.blocks.system import Secret
 
+import sagetasks.sevenbridges.general as sbggen
 import sagetasks.sevenbridges.prefect as sbg
 
 # specific task function imports
@@ -58,7 +60,7 @@ def prepare_file_imports(row):
 
 @task
 def call_import_volume_file(sbg_args, project_id, volume_id, row):
-    imported_file_id = sbg.import_volume_file.run(
+    imported_file_id = sbggen.import_volume_file(
         sbg_args,
         project_id,
         volume_id,
@@ -78,19 +80,23 @@ def concat_rows(rows):
 # Open a Flow context and use the functional API (if possible)
 # --------------------------------------------------------------
 
-with Flow("Demo") as flow:
 
-    # Parameters
-    manifest_id = Parameter("manifest_id")
-    synapse_folder = Parameter("synapse_folder")
-    project_name = Parameter("project_name")
-    billing_group_name = Parameter("billing_group_name")
-    app_id = Parameter("app_id")
-    volume_name = Parameter("volume_name")
+@flow()
+def populate_secrets():
+    synapse_secret = Secret(value=os.environ["SYNAPSE_AUTH_TOKEN"])
+    synapse_secret.save(name="synapse-auth-token", overwrite=True)
+    cavatica_secret = Secret(value=os.environ["SB_AUTH_TOKEN"])
+    cavatica_secret.save(name="sb-auth-token", overwrite=True)
+
+
+@flow(name="Demo")
+def demo(
+    manifest_id, synapse_folder, project_name, billing_group_name, app_id, volume_name
+):
 
     # Secrets
-    syn_token = EnvVarSecret("SYNAPSE_AUTH_TOKEN")
-    sbg_token = EnvVarSecret("SB_AUTH_TOKEN")
+    syn_token = Secret.load("synapse-auth-token").get()
+    sbg_token = Secret.load("sb-auth-token").get()
 
     # Client arguments
     syn_args = syn.bundle_client_args(syn_token)
@@ -120,6 +126,7 @@ with Flow("Demo") as flow:
     print_values(drafted_tasks)
     syn.store_dataframe(syn_args, sbg_manifest, "sbg_manifest.csv", synapse_folder)
 
+
 params = {
     "manifest_id": "syn33335513",
     "synapse_folder": "syn33335225",
@@ -129,11 +136,11 @@ params = {
     "volume_name": "include_sandbox_ro",
 }
 
-if len(argv) < 2 or argv[1] == "run":
-    flow.run(parameters=params)
-elif argv[1] == "viz":
-    flow.visualize(filename="flow", format="png")
-elif argv[1] == "register":
-    flow.register(project_name="demo")
-else:
-    print("Available Modes: 'run', 'viz', and 'register'")
+if __name__ == "__main__":
+    if len(argv) < 2 or argv[1] == "run":
+        populate_secrets()
+        demo(**params)
+    elif argv[1] == "viz":
+        raise NotImplementedError("Flow visualization not available yet in Prefect 2")
+    else:
+        print("Available Modes: 'run' and 'viz'")
