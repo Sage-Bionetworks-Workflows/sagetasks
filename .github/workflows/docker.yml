@@ -33,6 +33,8 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
+          build-args:
+            - PKG_VERSION=${{ env.DOCKER_TAG }}
           tags: |
             ${{ env.DOCKER_ORG }}/${{ env.DOCKER_REPO }}:latest
             ${{ env.DOCKER_ORG }}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
