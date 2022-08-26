@@ -14,7 +14,6 @@ jobs:
     env:
       DOCKER_ORG:  sagebionetworks
       DOCKER_REPO: sagetasks
-      DOCKER_TAG:  ${{ github.ref_name }}
     steps:
       -
         name: Checkout
