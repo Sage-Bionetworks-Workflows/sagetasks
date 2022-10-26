@@ -50,14 +50,11 @@ class TestTowerClient:
         for name, output in expectations.items():
             assert tower_client.get_valid_name(name) == output
 
-    def test_request(self, mocker, capfd, tower_client):
+    def test_request_nonempty(self, mocker, capfd, tower_client):
         # Setup
         eg_kwargs = {"foo": "bar"}
         mocked_request = mocker.patch("requests.request", autospec=True)
         mocked_request.return_value.json.return_value = eg_kwargs
-
-        def raise_json_error():
-            raise json.decoder.JSONDecodeError("", "", 0)
 
         # Regular call with non-empty response (w/o debugging)
         result = tower_client.request(EG_METHOD, EG_ENDPOINT, params=eg_kwargs)
@@ -73,6 +70,13 @@ class TestTowerClient:
         assert kwargs["params"] == eg_kwargs
         assert result == eg_kwargs
         assert captured.out == ""
+
+    def test_request_empty(self, mocker, capfd, tower_client):
+        # Setup
+        mocked_request = mocker.patch("requests.request", autospec=True)
+
+        def raise_json_error():
+            raise json.decoder.JSONDecodeError("", "", 0)
 
         # Regular call with empty response (w/ debugging)
         mocked_request.return_value.json.side_effect = raise_json_error

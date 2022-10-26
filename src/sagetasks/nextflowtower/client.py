@@ -85,6 +85,7 @@ class TowerClient:
         except json.decoder.JSONDecodeError:
             result = dict()
         if self.debug:
+            # TODO: Switch from print to logging
             print(f"\nEndpoint:\t {method} {url}")
             print(f"Params: \t {kwargs.get('params')}")
             print(f"Payload:\t {kwargs.get('json')}")
