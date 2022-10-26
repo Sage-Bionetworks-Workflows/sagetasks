@@ -7,43 +7,47 @@ import requests
 
 
 class TowerClient:
-    def __init__(self, tower_token=None, tower_api_url=None, debug_mode=False) -> None:
-        """Generate NextflowTower instance
+    def __init__(
+        self,
+        tower_token: str = None,
+        tower_api_url: str = None,
+        debug_mode: bool = False,
+    ) -> None:
+        """Simple Python client for making requests to Nextflow Tower.
 
-        The descriptions below for the user types were copied
-        from the Nextflow Tower interface.
+        Args:
+            tower_token (str): Tower (bearer) access token for authentication.
+                https://help.tower.nf/22.3/api/overview/#openapi
+            tower_api_url (str): Base URL for the Tower API.
+            debug_mode (bool): Whether to log HTTP requests.
 
         Raises:
             KeyError: The 'NXF_TOWER_TOKEN' environment variable isn't defined
             KeyError: The 'NXF_TOWER_API_URL' environment variable isn't defined
         """
+        # Initialize instance attributes
+        self.tower_token = (
+            tower_token
+            or os.environ.get("NXF_TOWER_TOKEN")
+            or os.environ.get("TOWER_ACCESS_TOKEN")  # Backwards-compatible
+        )
+        self.tower_api_base_url = (
+            tower_api_url
+            or os.environ.get("NXF_TOWER_API_URL")
+            or os.environ.get("TOWER_API_ENDPOINT")  # Backwards-compatible
+        )
         self.debug = debug_mode
-        # Retrieve Nextflow Tower token from environment
-        try:
-            self.tower_token = (
-                tower_token
-                or os.environ.get("NXF_TOWER_TOKEN")
-                or os.environ.get("TOWER_ACCESS_TOKEN")
+        # Check for empty values
+        if self.tower_token is None:
+            raise ValueError(
+                "Provide a Nextflow Tower access token using the `tower_token` "
+                "argument or the `NXF_TOWER_TOKEN` environment variable."
             )
-        except KeyError as e:
-            raise KeyError(
-                "The 'NXF_TOWER_TOKEN' environment variable must "
-                "be defined with a Nextflow Tower API token."
-            ) from e
-        # Retrieve Nextflow Tower API URL from environment
-        try:
-            tower_api_url = (
-                tower_api_url
-                or os.environ.get("NXF_TOWER_API_URL")
-                or os.environ.get("TOWER_API_ENDPOINT")
+        if self.tower_api_base_url is None:
+            raise ValueError(
+                "Provide the Nextflow Tower API base URL using the `tower_api_url` "
+                "argument or the `NXF_TOWER_API_URL` environment variable."
             )
-            assert tower_api_url is not None
-        except (KeyError, AssertionError) as e:
-            raise KeyError(
-                "The 'NXF_TOWER_API_URL' environment variable must "
-                "be defined with a Nextflow Tower API URL."
-            ) from e
-        self.tower_api_base_url = tower_api_url
 
     def get_valid_name(self, full_name: str) -> str:
         """Generate Tower-friendly name from full name
@@ -62,11 +66,17 @@ class TowerClient:
         Args:
             method (str): An HTTP method (GET, PUT, POST, or DELETE)
             endpoint (str): The API endpoint with the path parameters filled in
+            **kwargs: Additional named arguments passed through to
+                requests.request().
 
         Returns:
             Response: The raw Response object to allow for special handling
         """
-        assert method in {"GET", "PUT", "POST", "DELETE"}
+        valid_methods = {"GET", "PUT", "POST", "DELETE"}
+        if method not in valid_methods:
+            raise ValueError(
+                f"Specified method ({method}) isn't a valid option ({valid_methods})."
+            )
         url = self.tower_api_base_url + endpoint
         kwargs["headers"] = {"Authorization": f"Bearer {self.tower_token}"}
         response = requests.request(method, url, **kwargs)
@@ -88,6 +98,8 @@ class TowerClient:
         Args:
             method (str): An HTTP method (GET, PUT, POST, or DELETE)
             endpoint (str): The API endpoint with the path parameters filled in
+            **kwargs: Additional named arguments passed through to
+                requests.request().
 
         Returns:
             Iterator[Dict]: An iterator traversing through pages of responses
