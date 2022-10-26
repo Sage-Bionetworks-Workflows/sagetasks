@@ -34,7 +34,7 @@ class TestTowerClient:
             if var in os.environ:
                 del os.environ[var]
         # Ensure exception when initializing
-        with pytest.raises(KeyError):
+        with pytest.raises(ValueError):
             client.TowerClient()
 
     def test_get_valid_name(self, tower_client):
