@@ -17,10 +17,6 @@ def tower_client():
     return client.TowerClient(EG_TOKEN, EG_API_URL)
 
 
-def test_import():
-    assert client
-
-
 class TestTowerClient:
     def test_missing_args(self):
         # Clear environment
