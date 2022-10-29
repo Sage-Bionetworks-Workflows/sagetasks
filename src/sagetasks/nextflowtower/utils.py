@@ -88,9 +88,9 @@ class TowerUtils:
         nextflow_config=None,
         run_name=None,
         work_dir=None,
-        profiles=[],
-        workspace_secrets=[],
-        user_secrets=[],
+        profiles=(),
+        workspace_secrets=(),
+        user_secrets=(),
         pre_run_script=None,
         **kwargs,
     ):
