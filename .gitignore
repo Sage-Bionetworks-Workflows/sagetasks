@@ -23,6 +23,7 @@ __pycache__/*
 .vscode
 tags
 .env
+*.ipynb
 
 # Package files
 *.egg
