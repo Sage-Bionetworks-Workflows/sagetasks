@@ -49,6 +49,9 @@ class TestTowerUtils:
         # Single element (extracted successfully)
         single_result = tower_utils.extract_resource(single)
         assert single_result == multiple
+        # Multiple elements (specified key)
+        multiple_key_result = tower_utils.extract_resource(multiple, "tic")
+        assert multiple_key_result == "tac"
         # Multiple elements (input = output)
         multiple_result = tower_utils.extract_resource(multiple)
         assert multiple_result == multiple
@@ -60,3 +63,60 @@ class TestTowerUtils:
         expected_token = EG_UTILS_ARGS["auth_token"]
         assert result["tower_api_url"] == expected_endpoint
         assert result["tower_token"] == expected_token
+
+    EG_COMPUTE_ENV = {
+        "computeEnv": {
+            "id": "a1b2c3",
+            "name": "test-project-ce",
+            "platform": "aws-batch",
+            "config": {
+                "workDir": "s3://test-project-tower-scratch/work",
+                "preRunScript": "NXF_OPTS='-Xms4g -Xmx12g'",
+                "postRunScript": None,
+            },
+            "status": "AVAILABLE",
+            "orgId": 98765,
+            "workspaceId": 65748,
+        }
+    }
+
+    def test_get_compute_env(self, mocker, tower_utils):
+        mocked_request = mocker.patch.object(utils.TowerClient, "request")
+        mocked_request.return_value = self.EG_COMPUTE_ENV
+        workflow_id = self.EG_COMPUTE_ENV["computeEnv"]["id"]
+        result = tower_utils.get_compute_env(workflow_id)
+        assert result == self.EG_COMPUTE_ENV["computeEnv"]
+
+    EG_WORKFLOW = {
+        "workflow": {
+            "id": "7g2R5Z1J",
+            "runName": "tiny_shaw",
+            "sessionId": "n8b7v6-o4i5-u6q8w6-e2s7l1",
+            "profile": "test",
+            "workDir": "s3://test-project-tower-scratch/work",
+            "userName": "bgrande",
+            "revision": "3.9",
+            "commandLine": "nextflow run ...",
+            "projectName": "nf-core/rnaseq",
+            "launchId": "y1u2i3",
+            "status": "SUBMITTED",
+        },
+        "progress": {
+            "workflowProgress": {},
+            "processesProgress": [],
+        },
+        "platform": {"id": "aws-batch", "name": "Amazon Batch"},
+        "jobInfo": {},
+    }
+
+    def test_get_workflow(self, mocker, tower_utils):
+        mocked_request = mocker.patch.object(utils.TowerClient, "request")
+        mocked_request.return_value = self.EG_WORKFLOW
+        workflow_id = self.EG_WORKFLOW["workflow"]["id"]
+        result = tower_utils.get_workflow(workflow_id)
+        assert result == self.EG_WORKFLOW
+
+    EG_LAUNCH = {"workflowId": "h2j3k4"}
+
+    def test_launch_workflow(self):
+        pass
