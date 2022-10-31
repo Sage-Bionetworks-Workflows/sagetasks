@@ -32,6 +32,10 @@ class TestTowerClient:
         # Ensure exception when initializing
         with pytest.raises(ValueError):
             client.TowerClient()
+        with pytest.raises(ValueError):
+            client.TowerClient(tower_token=EG_TOKEN)
+        with pytest.raises(ValueError):
+            client.TowerClient(tower_api_url=EG_API_URL)
 
     def test_get_valid_name(self, tower_client):
         expectations = {
@@ -45,6 +49,10 @@ class TestTowerClient:
         }
         for name, output in expectations.items():
             assert tower_client.get_valid_name(name) == output
+
+    def test_request_nonmethod(self, tower_client):
+        with pytest.raises(ValueError):
+            tower_client.request("FOO", EG_ENDPOINT)
 
     def test_request_nonempty(self, mocker, capfd, tower_client):
         # Setup
