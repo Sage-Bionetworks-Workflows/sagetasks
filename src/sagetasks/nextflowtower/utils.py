@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+from copy import copy
 from datetime import datetime
 
 from sagetasks.nextflowtower.client import TowerClient
@@ -78,6 +80,53 @@ class TowerUtils:
         response = self.client.request("GET", endpoint, params=params)
         return response
 
+    @staticmethod
+    def update_dict(base_dict, overrides):
+        dict_copy = copy(base_dict)
+        for k, v in overrides.items():
+            oldv = dict_copy.get(k, {})
+            if k not in dict_copy:
+                valid = set(dict_copy)
+                raise ValueError(f"Cannot update {k}. Not among {valid}.")
+            elif isinstance(oldv, Mapping) and isinstance(v, Mapping):
+                dict_copy[k] = TowerUtils.update_dict(oldv, v)
+            elif v is not None:
+                dict_copy[k] = v
+        return dict_copy
+
+    def init_launch_workflow_data(self, compute_env_id):
+        # Retrieve compute environment for default values
+        compute_env = self.get_compute_env(compute_env_id)
+        assert compute_env["status"] == "AVAILABLE"
+        ce_config = compute_env["config"]
+        # Replicating date format in requests made by Tower frontend
+        now_utc = datetime.now().isoformat()[:-3] + "Z"
+        data = {
+            "launch": {
+                "computeEnvId": compute_env_id,
+                "configProfiles": [],
+                "configText": None,
+                "dateCreated": now_utc,
+                "entryName": None,
+                "id": None,
+                "mainScript": None,
+                "paramsText": None,
+                "pipeline": None,
+                "postRunScript": ce_config["postRunScript"],
+                "preRunScript": ce_config["preRunScript"],
+                "pullLatest": None,
+                "revision": None,
+                "runName": None,
+                "schemaName": None,
+                "stubRun": None,
+                "towerConfig": None,
+                "userSecrets": [],
+                "workDir": ce_config["workDir"],
+                "workspaceSecrets": [],
+            }
+        }
+        return data
+
     def launch_workflow(
         self,
         compute_env_id,
@@ -92,48 +141,31 @@ class TowerUtils:
         workspace_secrets=(),
         user_secrets=(),
         pre_run_script=None,
-        **kwargs,
+        overrides=None,
     ):
         endpoint = "/workflow/launch"
         params = self.init_params()
-        # Retrieve compute environment for default values
-        compute_env = self.get_compute_env(compute_env_id)
-        assert compute_env["status"] == "AVAILABLE"
-        ce_config = compute_env["config"]
-        # Replicating date format in requests made by Tower frontend
-        now_utc = datetime.now().isoformat()[:-3] + "Z"
-        data = {
+        arguments = {
             "launch": {
-                "computeEnvId": compute_env_id,
                 "configProfiles": profiles,
                 "configText": nextflow_config,
-                "dateCreated": now_utc,
-                "entryName": None,
-                "id": None,
-                "mainScript": None,
                 # TODO: Validate YAML or JSON
                 "paramsText": params_yaml or params_json,
                 "pipeline": pipeline,
-                "postRunScript": ce_config["postRunScript"],
-                "preRunScript": pre_run_script or ce_config["preRunScript"],
-                "pullLatest": None,
+                "preRunScript": pre_run_script,
                 "revision": revision,
                 # TODO: Avoid duplicate run names
                 "runName": run_name,
-                "schemaName": None,
-                "stubRun": None,
-                "towerConfig": None,
                 "userSecrets": user_secrets,
-                "workDir": work_dir or ce_config["workDir"],
+                "workDir": work_dir,
                 "workspaceSecrets": workspace_secrets,
             }
         }
-        # Update payload with arbitrary kwargs before submitting request
-        for key, value in kwargs.items():
-            if key in data:
-                data[key] = value
-            else:
-                raise ValueError(f"'{key}' not in request object ({list(data)}).")
+        overrides = overrides or dict()
+        # Update default data with argument values and user-provided overrides
+        data = self.init_launch_workflow_data(compute_env_id)
+        data = self.update_dict(data, arguments)
+        data = self.update_dict(data, overrides)
         # Launch workflow and obtain workflow ID
         launch_response = self.client.request(
             "POST", endpoint, params=params, json=data
