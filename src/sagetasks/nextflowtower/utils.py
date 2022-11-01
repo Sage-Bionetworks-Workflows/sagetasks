@@ -1,8 +1,7 @@
-from collections.abc import Mapping
-from copy import copy
 from datetime import datetime
 
 from sagetasks.nextflowtower.client import TowerClient
+from sagetasks.utils import dedup, update_dict
 
 ENDPOINTS = {
     "tower.nf": "https://tower.nf/api",
@@ -20,7 +19,7 @@ class TowerUtils:
         Optionally, you can set a default workspace for various methods with the
         `open_workspace()` method.
         """
-        # TODO: Validate access token
+        # TODO: Validate access token (by attempting a simple auth'ed request)
         self.client = TowerClient(**client_args)
         self._workspace = None
 
@@ -44,25 +43,12 @@ class TowerUtils:
         return {"workspaceId": self.workspace}
 
     @staticmethod
-    def extract_resource(response, key=None):
-        """Extracts the nested resource from a response dictionary.
-
-        These IDs are strings, which can be pickled unlike the resource objects.
-        """
-        if key is None and isinstance(response, dict) and len(response) == 1:
-            key = list(response)[0]
-            resource = response[key]
-        elif isinstance(response, dict) and key in response:
-            resource = response[key]
-        else:
-            resource = response
-        return resource
-
-    @staticmethod
     def bundle_client_args(auth_token, platform="tower.nf", endpoint=None, **kwargs):
         """Bundles the information for authenticating a Tower client."""
-        assert platform is None or platform in ENDPOINTS
-        assert platform or endpoint
+        if platform is not None and platform not in ENDPOINTS:
+            raise ValueError(f"`platform` must be among {list(ENDPOINTS)} (or None).")
+        if platform is None and endpoint is None:
+            raise ValueError(f"Provide value for either `platform` or `endpoint`.")
         endpoint = endpoint if endpoint else ENDPOINTS[platform]
         client_args = dict(tower_token=auth_token, tower_api_url=endpoint, **kwargs)
         return client_args
@@ -71,7 +57,7 @@ class TowerUtils:
         endpoint = f"/compute-envs/{compute_env_id}"
         params = self.init_params()
         response = self.client.request("GET", endpoint, params=params)
-        compute_env = self.extract_resource(response)
+        compute_env = response["computeEnv"]
         return compute_env
 
     def get_workflow(self, workflow_id):
@@ -80,24 +66,12 @@ class TowerUtils:
         response = self.client.request("GET", endpoint, params=params)
         return response
 
-    @staticmethod
-    def update_dict(base_dict, overrides):
-        dict_copy = copy(base_dict)
-        for k, v in overrides.items():
-            oldv = dict_copy.get(k, {})
-            if k not in dict_copy:
-                valid = set(dict_copy)
-                raise ValueError(f"Cannot update {k}. Not among {valid}.")
-            elif isinstance(oldv, Mapping) and isinstance(v, Mapping):
-                dict_copy[k] = TowerUtils.update_dict(oldv, v)
-            elif v is not None:
-                dict_copy[k] = v
-        return dict_copy
-
     def init_launch_workflow_data(self, compute_env_id):
         # Retrieve compute environment for default values
         compute_env = self.get_compute_env(compute_env_id)
-        assert compute_env["status"] == "AVAILABLE"
+        if compute_env["status"] != "AVAILABLE":
+            ce_name = compute_env["name"]
+            raise ValueError(f"The compute environment ({ce_name}) is not available.")
         ce_config = compute_env["config"]
         # Replicating date format in requests made by Tower frontend
         now_utc = datetime.now().isoformat()[:-3] + "Z"
@@ -141,7 +115,7 @@ class TowerUtils:
         workspace_secrets=(),
         user_secrets=(),
         pre_run_script=None,
-        overrides=None,
+        init_data=None,
     ):
         endpoint = "/workflow/launch"
         params = self.init_params()
@@ -156,22 +130,16 @@ class TowerUtils:
                 "revision": revision,
                 # TODO: Avoid duplicate run names
                 "runName": run_name,
-                "userSecrets": user_secrets,
+                "userSecrets": dedup(user_secrets),
                 "workDir": work_dir,
-                "workspaceSecrets": workspace_secrets,
+                "workspaceSecrets": dedup(workspace_secrets),
             }
         }
-        overrides = overrides or dict()
         # Update default data with argument values and user-provided overrides
-        data = self.init_launch_workflow_data(compute_env_id)
-        data = self.update_dict(data, arguments)
-        data = self.update_dict(data, overrides)
+        data = init_data or self.init_launch_workflow_data(compute_env_id)
+        data = update_dict(data, arguments)
         # Launch workflow and obtain workflow ID
-        launch_response = self.client.request(
-            "POST", endpoint, params=params, json=data
-        )
-        workflow_id = self.extract_resource(launch_response)
+        response = self.client.request("POST", endpoint, params=params, json=data)
         # Get more information about workflow run
-        workflow_response = self.get_workflow(workflow_id)
-        workflow = self.extract_resource(workflow_response, "workflow")
+        workflow = self.get_workflow(response["workflowId"])
         return workflow
