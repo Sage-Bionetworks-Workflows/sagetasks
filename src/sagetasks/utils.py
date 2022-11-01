@@ -1,6 +1,6 @@
 import inspect
 import sys
-from collections.abc import Mapping, Sequence, Set
+from collections.abc import Mapping, Sequence
 from copy import copy
 
 from prefect import task
