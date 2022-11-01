@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Mapping, Optional, Sequence, SupportsInt
+from typing import Mapping, Optional, Sequence
 
 from sagetasks.nextflowtower.client import TowerClient
 from sagetasks.utils import dedup, update_dict
@@ -44,11 +44,11 @@ class TowerUtils:
             raise ValueError("Workspace not opened yet. Use `open_workspace()`.")
         return self._workspace
 
-    def open_workspace(self, workspace_id: Optional[SupportsInt]) -> None:
+    def open_workspace(self, workspace_id: Optional[int]) -> None:
         """Configure default workspace for workspace-related requests.
 
         Args:
-            workspace_id (Optional[SupportsInt]): Tower workspace identifier.
+            workspace_id (Optional[int]): Tower workspace identifier.
                 If `None`, this will close any opened workspace.
         """
         if workspace_id is None:
@@ -248,7 +248,7 @@ class TowerUtils:
         params = self.init_params()
         arguments = {
             "launch": {
-                "configProfiles": profiles,
+                "configProfiles": dedup(profiles),
                 "configText": nextflow_config,
                 # TODO: Validate YAML or JSON
                 "paramsText": params_yaml or params_json,

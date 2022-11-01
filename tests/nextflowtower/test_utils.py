@@ -6,7 +6,7 @@ from sagetasks.utils import dedup
 
 EG_UTILS_ARGS = {"platform": "tower.nf", "auth_token": "foobar"}
 
-EG_WORKSPACE_ID = "foobar"
+EG_WORKSPACE_ID = 123456
 
 EG_COMPUTE_ENV = {
     "computeEnv": {
@@ -75,8 +75,8 @@ class TestTowerUtils:
             tower_utils.workspace
 
     def test_open_workspace(self, tower_utils):
-        tower_utils.open_workspace("barfoo")
-        assert tower_utils._workspace == "barfoo"
+        tower_utils.open_workspace(987654)
+        assert tower_utils._workspace == 987654
 
     def test_close_workspace(self, tower_utils):
         tower_utils.close_workspace()
