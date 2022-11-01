@@ -80,6 +80,7 @@ class TowerClient:
         url = self.tower_api_base_url + endpoint
         kwargs["headers"] = {"Authorization": f"Bearer {self.tower_token}"}
         response = requests.request(method, url, **kwargs)
+        response.raise_for_status()
         try:
             result = response.json()
         except json.decoder.JSONDecodeError:
