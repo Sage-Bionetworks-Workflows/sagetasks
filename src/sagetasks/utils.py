@@ -4,6 +4,7 @@ from collections.abc import Mapping, Sequence
 from copy import copy
 
 from prefect import task
+from typer import Typer
 
 
 def to_prefect_tasks(module_name: str, general_module: str) -> None:
@@ -20,6 +21,19 @@ def to_prefect_tasks(module_name: str, general_module: str) -> None:
         first_line = docstring.splitlines()[0]
         task_func = task(func, name=first_line)
         setattr(this_module, name, task_func)
+
+
+def to_typer_commands(general_module: str, typer_app: Typer) -> None:
+    """Wrap functions inside a general module as Typer commands.
+
+    Args:
+        module_name (str): Module name.
+        general_module (str): General submodule name.
+        typer_app (Typer): Instantiated Typer app.
+    """
+    general_funcs = inspect.getmembers(general_module, inspect.isfunction)
+    for _, func in general_funcs:
+        typer_app.command()(func)
 
 
 def update_dict(base_dict: Mapping, overrides: Mapping) -> Mapping:
