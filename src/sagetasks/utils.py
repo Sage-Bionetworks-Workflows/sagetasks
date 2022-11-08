@@ -1,7 +1,9 @@
 import inspect
+import json
 import sys
 from collections.abc import Mapping, Sequence
 from copy import copy
+from functools import wraps
 
 from prefect import task
 from typer import Typer
@@ -31,9 +33,23 @@ def to_typer_commands(general_module: str, typer_app: Typer) -> None:
         general_module (str): General submodule name.
         typer_app (Typer): Instantiated Typer app.
     """
+
+    def wrapped_func_generator(func):
+        @wraps(func)
+        def wrapped_func(*args, **kwargs):
+            result = func(*args, **kwargs)
+            try:
+                output = json.dumps(result, indent=2)
+            except TypeError:
+                output = repr(result)
+            print(output)
+
+        return wrapped_func
+
     general_funcs = inspect.getmembers(general_module, inspect.isfunction)
     for _, func in general_funcs:
-        typer_app.command()(func)
+        wrapped_func = wrapped_func_generator(func)
+        typer_app.command()(wrapped_func)
 
 
 def update_dict(base_dict: Mapping, overrides: Mapping) -> Mapping:

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Mapping, Optional, Sequence
+from typing import List, Mapping, Optional
 
 from sagetasks.nextflowtower.client import TowerClient
 from sagetasks.utils import dedup, update_dict
@@ -196,9 +196,9 @@ class TowerUtils:
         nextflow_config: Optional[str] = None,
         run_name: Optional[str] = None,
         work_dir: Optional[str] = None,
-        profiles: Optional[Sequence] = (),
-        user_secrets: Optional[Sequence] = (),
-        workspace_secrets: Optional[Sequence] = (),
+        profiles: Optional[List[str]] = (),
+        user_secrets: Optional[List[str]] = (),
+        workspace_secrets: Optional[List[str]] = (),
         pre_run_script: Optional[str] = None,
         init_data: Optional[Mapping] = None,
     ) -> dict:
@@ -224,13 +224,13 @@ class TowerUtils:
             work_dir (str, optional): The bucket path where the pipeline
                 scratch data is stored. Defaults to None, which uses the
                 default work directory for the given compute environment.
-            profiles (Sequence, optional): Configuration profile names
+            profiles (List[str], optional): Configuration profile names
                 to use for this execution. Defaults to an empty list.
-            user_secrets (Sequence, optional): Secrets required by the
+            user_secrets (List[str], optional): Secrets required by the
                 pipeline execution. Those secrets must be defined in the
                 launching user's account. User secrets take precedence over
                 workspace secrets. Defaults to an empty list.
-            workspace_secrets (Sequence, optional): Secrets required by the
+            workspace_secrets (List[str], optional): Secrets required by the
                 pipeline execution. Those secrets must be defined in the
                 opened workspace. Defaults to an empty list.
             pre_run_script (str, optional): A Bash script that's executed

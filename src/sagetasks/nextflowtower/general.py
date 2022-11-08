@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 from sagetasks.nextflowtower.utils import TowerUtils
 
 
@@ -9,26 +11,42 @@ def bundle_client_args(auth_token, platform="sage", endpoint=None, **kwargs):
 def launch_workflow(
     compute_env_id: str,
     pipeline: str,
-    client_args=None,
     workspace_id=None,
+    revision: Optional[str] = None,
+    params_yaml: Optional[str] = None,
+    params_json: Optional[str] = None,
+    nextflow_config: Optional[str] = None,
+    run_name: Optional[str] = None,
+    work_dir: Optional[str] = None,
+    profiles: Optional[List[str]] = None,
+    user_secrets: Optional[List[str]] = None,
+    workspace_secrets: Optional[List[str]] = None,
+    pre_run_script: Optional[str] = None,
+    # Disabled because Typer doesn't support Mappings
+    # init_data: Optional[Mapping] = None,
+    client_args=None,
 ):
     """Nextflow Tower - Launch a workflow."""
+    # More specific default values than None
     client_args = client_args or dict()
+    profiles = profiles or ()
+    user_secrets = user_secrets or ()
+    workspace_secrets = workspace_secrets or ()
+    # Prepare and execute the workflow launch
     utils = TowerUtils(client_args)
     utils.open_workspace(workspace_id)
     workflow = utils.launch_workflow(
         compute_env_id,
         pipeline,
-        # revision=None,
-        # params_yaml=None,
-        # params_json=None,
-        # nextflow_config=None,
-        # run_name=None,
-        # work_dir=None,
-        # profiles=(),
-        # user_secrets=(),
-        # workspace_secrets=(),
-        # pre_run_script=None,
-        # init_data=None,
+        revision=revision,
+        params_yaml=params_yaml,
+        params_json=params_json,
+        nextflow_config=nextflow_config,
+        run_name=run_name,
+        work_dir=work_dir,
+        profiles=profiles,
+        user_secrets=user_secrets,
+        workspace_secrets=workspace_secrets,
+        pre_run_script=pre_run_script,
     )
     return workflow
