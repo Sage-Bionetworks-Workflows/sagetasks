@@ -34,6 +34,9 @@ def to_typer_commands(general_module: str, typer_app: Typer) -> None:
         typer_app (Typer): Instantiated Typer app.
     """
 
+    # This weird setup is to avoid a flake8 B023 linting
+    # error, which is associated with the following gotcha:
+    # https://docs.python-guide.org/writing/gotchas/#late-binding-closures
     def wrapped_func_generator(func):
         @wraps(func)
         def wrapped_func(*args, **kwargs):
