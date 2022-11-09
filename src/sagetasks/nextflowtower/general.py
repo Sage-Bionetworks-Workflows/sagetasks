@@ -25,11 +25,26 @@ def launch_workflow(
     user_secrets: Optional[List[str]] = None,
     workspace_secrets: Optional[List[str]] = None,
     pre_run_script: Optional[str] = None,
-    # Disabled because Typer doesn't support Mappings
+    # TODO: Re-enable once we find a way to get Typer to support Mappings
     # init_data: Optional[Mapping] = None,
     client_args=None,
 ):
-    """Nextflow Tower - Launch a workflow."""
+    """Launch a workflow run on Nextflow Tower.
+
+    You can provide your Tower credentials with the following
+    environment variables:
+
+    - NXF_TOWER_TOKEN='<tower-access-token>'
+
+    - NXF_TOWER_API_URL='<tower-api-url>'
+
+
+
+    You can optionally enable debug mode (HTTP request logs)
+    with the following environment variable:
+
+    - NXF_TOWER_DEBUG=1
+    """
     # More specific default values than None
     client_args = client_args or dict()
     profiles = profiles or ()

@@ -1,11 +1,11 @@
 import inspect
-import json
 import sys
 from collections.abc import Mapping, Sequence
 from copy import copy
 from functools import wraps
 
 from prefect import task
+from rich import print as rich_print
 from typer import Typer
 
 
@@ -33,7 +33,9 @@ def to_typer_commands(general_module: str) -> None:
     for other purposes. At the CLI, this return value isn't
     visible by default. Hence, before being passed to Typer,
     `to_typer_commands()` wraps each function such that the
-    return value is printed on standard output.
+    return value is printed on standard output. For the time
+    being, the `print()` function from the `rich` package is
+    being used for colored and formatted output.
 
     Args:
         general_module (str): General submodule name.
@@ -46,15 +48,17 @@ def to_typer_commands(general_module: str) -> None:
         @wraps(func)
         def printing_func(*args, **kwargs):
             result = func(*args, **kwargs)
-            try:
-                output = json.dumps(result, indent=2)
-            except TypeError:
-                output = repr(result)
-            print(output)
+            rich_print(result)
+            # TODO: Use this after we add a global JSON output CLI option
+            # try:
+            #     output = json.dumps(result, indent=2)
+            # except TypeError:
+            #     output = repr(result)
+            # print(output)
 
         return printing_func
 
-    typer_app = Typer()
+    typer_app = Typer(rich_markup_mode="markdown")
     general_funcs = inspect.getmembers(general_module, inspect.isfunction)
 
     for _, func in general_funcs:
