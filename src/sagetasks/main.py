@@ -1,6 +1,6 @@
 from typer import Typer
 
-import sagetasks.nextflowtower.typer as nextflowtower
+import sagetasks.nextflowtower.typer
 
 app = Typer()
-app.add_typer(nextflowtower.app, name="nextflowtower")
+app.add_typer(sagetasks.nextflowtower.typer.app, name="nextflowtower")

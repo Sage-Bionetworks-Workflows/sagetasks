@@ -1,3 +1,3 @@
-from .main import app
+from sagetasks.main import app
 
 app(prog_name="sagetasks")

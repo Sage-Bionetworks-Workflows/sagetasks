@@ -25,21 +25,26 @@ def to_prefect_tasks(module_name: str, general_module: str) -> None:
         setattr(this_module, name, task_func)
 
 
-def to_typer_commands(general_module: str, typer_app: Typer) -> None:
+def to_typer_commands(general_module: str) -> None:
     """Wrap functions inside a general module as Typer commands.
 
+    Most functions being converted into Typer commands have
+    a return value. In Python, that return value can be used
+    for other purposes. At the CLI, this return value isn't
+    visible by default. Hence, before being passed to Typer,
+    `to_typer_commands()` wraps each function such that the
+    return value is printed on standard output.
+
     Args:
-        module_name (str): Module name.
         general_module (str): General submodule name.
-        typer_app (Typer): Instantiated Typer app.
     """
 
     # This weird setup is to avoid a flake8 B023 linting
     # error, which is associated with the following gotcha:
     # https://docs.python-guide.org/writing/gotchas/#late-binding-closures
-    def wrapped_func_generator(func):
+    def add_print(func):
         @wraps(func)
-        def wrapped_func(*args, **kwargs):
+        def printing_func(*args, **kwargs):
             result = func(*args, **kwargs)
             try:
                 output = json.dumps(result, indent=2)
@@ -47,12 +52,16 @@ def to_typer_commands(general_module: str, typer_app: Typer) -> None:
                 output = repr(result)
             print(output)
 
-        return wrapped_func
+        return printing_func
 
+    typer_app = Typer()
     general_funcs = inspect.getmembers(general_module, inspect.isfunction)
+
     for _, func in general_funcs:
-        wrapped_func = wrapped_func_generator(func)
-        typer_app.command()(wrapped_func)
+        printing_func = add_print(func)
+        typer_app.command()(printing_func)
+
+    return typer_app
 
 
 def update_dict(base_dict: Mapping, overrides: Mapping) -> Mapping:

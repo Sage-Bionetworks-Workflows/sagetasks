@@ -2,10 +2,13 @@ from typing import List, Optional
 
 from sagetasks.nextflowtower.utils import TowerUtils
 
-
-def bundle_client_args(auth_token, platform="sage", endpoint=None, **kwargs):
-    """Nextflow Tower - Bundle client arguments."""
-    return TowerUtils.bundle_client_args(auth_token, platform, endpoint, **kwargs)
+# TODO: Re-enable this function once we've figured out how to best handle
+#       `kwargs` in Typer. The following links might be useful for this:
+#       https://typer.tiangolo.com/tutorial/commands/context/#configuring-the-context
+#       https://peps.python.org/pep-0692/
+# def bundle_client_args(auth_token, platform="sage", endpoint=None, **kwargs):
+#     """Nextflow Tower - Bundle client arguments."""
+#     return TowerUtils.bundle_client_args(auth_token, platform, endpoint, **kwargs)
 
 
 def launch_workflow(
