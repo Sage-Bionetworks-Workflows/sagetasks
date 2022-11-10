@@ -2,8 +2,11 @@ import inspect
 import sys
 from collections.abc import Mapping, Sequence
 from copy import copy
+from functools import wraps
 
 from prefect import task
+from rich import print as rich_print
+from typer import Typer
 
 
 def to_prefect_tasks(module_name: str, general_module: str) -> None:
@@ -20,6 +23,49 @@ def to_prefect_tasks(module_name: str, general_module: str) -> None:
         first_line = docstring.splitlines()[0]
         task_func = task(func, name=first_line)
         setattr(this_module, name, task_func)
+
+
+def to_typer_commands(general_module: str) -> None:
+    """Wrap functions inside a general module as Typer commands.
+
+    Most functions being converted into Typer commands have
+    a return value. In Python, that return value can be used
+    for other purposes. At the CLI, this return value isn't
+    visible by default. Hence, before being passed to Typer,
+    `to_typer_commands()` wraps each function such that the
+    return value is printed on standard output. For the time
+    being, the `print()` function from the `rich` package is
+    being used for colored and formatted output.
+
+    Args:
+        general_module (str): General submodule name.
+    """
+
+    # This weird setup is to avoid a flake8 B023 linting
+    # error, which is associated with the following gotcha:
+    # https://docs.python-guide.org/writing/gotchas/#late-binding-closures
+    def add_print(func):
+        @wraps(func)
+        def printing_func(*args, **kwargs):
+            result = func(*args, **kwargs)
+            rich_print(result)
+            # TODO: Use this after we add a global JSON output CLI option
+            # try:
+            #     output = json.dumps(result, indent=2)
+            # except TypeError:
+            #     output = repr(result)
+            # print(output)
+
+        return printing_func
+
+    typer_app = Typer(rich_markup_mode="markdown")
+    general_funcs = inspect.getmembers(general_module, inspect.isfunction)
+
+    for _, func in general_funcs:
+        printing_func = add_print(func)
+        typer_app.command()(printing_func)
+
+    return typer_app
 
 
 def update_dict(base_dict: Mapping, overrides: Mapping) -> Mapping:

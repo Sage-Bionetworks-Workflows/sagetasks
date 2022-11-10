@@ -36,7 +36,7 @@ class TowerClient:
             or os.environ.get("NXF_TOWER_API_URL")
             or os.environ.get("TOWER_API_ENDPOINT")  # Backwards-compatible
         )
-        self.debug = debug_mode
+        self.debug = debug_mode or bool(int(os.environ.get("NXF_TOWER_DEBUG", 0)))
         # Check for empty values
         if self.tower_token is None:
             raise ValueError(
