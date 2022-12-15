@@ -53,7 +53,8 @@ jobs:
     strategy:
       matrix:
         python:
-        - "3.8"  # oldest Python supported by package
+        - "3.7" # oldest Python supported by package
+        - "3.8"
         - "3.10"  # newest Python that is stable
         platform:
         - ubuntu-latest
@@ -68,9 +69,10 @@ jobs:
       - name: Retrieve pre-built distribution files
         uses: actions/download-artifact@v3
         with: {name: python-distribution-files, path: dist/}
+      # tag 3.27.1 to fix https://github.com/tox-dev/tox/issues/2442
       - name: Run tests
         run: >-
-          pipx run tox
+          pipx run --spec tox==3.27.1 tox
           --installpkg '${{ needs.prepare.outputs.wheel-distribution }}'
           -- -rFEx --durations 10 --color yes
       - name: Upload coverage to Codecov
