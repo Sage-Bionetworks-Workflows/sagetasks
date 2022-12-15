@@ -54,7 +54,7 @@ jobs:
       matrix:
         python:
         - "3.7" # oldest Python supported by package
-        - "3.8"  
+        - "3.8"
         - "3.10"  # newest Python that is stable
         platform:
         - ubuntu-latest
