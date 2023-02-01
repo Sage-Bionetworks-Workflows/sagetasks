@@ -1,9 +1,7 @@
 # Sage Prefect Tasks
 
-<!--
-[![ReadTheDocs](https://readthedocs.org/projects/sagetasks/badge/?version=latest)](https://sagetasks.readthedocs.io/en/stable/)
+[![ReadTheDocs](https://readthedocs.org/projects/sagetasks/badge/?version=latest)](https://sage-bionetworks-workflows.github.io/sagetasks/)
 [![PyPI-Server](https://img.shields.io/pypi/v/sagetasks.svg)](https://pypi.org/project/sagetasks/)
--->
 
 ⚠️ **Warning: This repository is a work in progress.** ⚠️
 
